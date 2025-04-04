@@ -4,21 +4,17 @@ Excellent — here's a complete and **professionally written `README.md`** tailo
 
 ### ✅ `README.md` (for repo: `AiStore`)
 
-```markdown
+
 # 🛍️ AiStore — AI-Powered eCommerce with GNN Recommendations
 
 Welcome to **AiStore**, an intelligent eCommerce web application built by **Ai Solutions**. This project integrates a powerful **Graph Neural Network (GNN)** recommendation engine—implemented using **PyTorch**—into a full-featured **Django** web app.
 
-> Personalize user experience using cutting-edge AI models in a real-world online store setting.
-
----
+> Personalize user experience using AI models in a real-world online store setting.
 
 ![Python](https://img.shields.io/badge/Python-3.10-blue)
 ![Django](https://img.shields.io/badge/Django-4.x-green)
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.x-red)
 ![License](https://img.shields.io/badge/License-MIT-lightgrey)
-
----
 
 ## 🚀 Key Features
 
@@ -28,7 +24,7 @@ Welcome to **AiStore**, an intelligent eCommerce web application built by **Ai S
 - 📊 Model training, evaluation, and deployment workflows included  
 - 🔌 Easy-to-use REST API for recommendations (coming soon)
 
----
+
 
 ## 🧠 What Makes This Unique?
 
@@ -37,7 +33,7 @@ Traditional recommendation systems use collaborative filtering or content-based 
 - Building a **product-user interaction graph**
 - Learning **graph embeddings** with **GraphSAGE**
 - Using those embeddings for **real-time recommendations**
----
+
 
 ## 📁 Project Structure
 
