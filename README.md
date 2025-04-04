@@ -1,10 +1,3 @@
-Excellent — here's a complete and **professionally written `README.md`** tailored to your project: a **Django eCommerce app** with a **PyTorch-based Graph Neural Network (GNN) recommender**, under your brand **Ai Solutions**.
-
----
-
-### ✅ `README.md` (for repo: `AiStore`)
-
-
 # 🛍️ AiStore — AI-Powered eCommerce with GNN Recommendations
 
 Welcome to **AiStore**, an intelligent eCommerce web application built by **Ai Solutions**. This project integrates a powerful **Graph Neural Network (GNN)** recommendation engine—implemented using **PyTorch**—into a full-featured **Django** web app.
@@ -52,7 +45,6 @@ aistore/
 ├── requirements.txt
 └── README.md
 ```
-
 ---
 
 ## ⚙️ Installation Guide
@@ -118,8 +110,8 @@ Later, you can use the embeddings in `recommend.py` to return product suggestion
 
 ## 📌 Roadmap
 
-- [x] Basic eCommerce functionality
-- [x] GNN training module with PyTorch
+- [x] Develop eCommerce web service.
+- [ ] GNN training module with PyTorch
 - [ ] GNN inference via API
 - [ ] Frontend integration with recommendation results
 - [ ] Docker & deployment scripts
@@ -145,9 +137,8 @@ This project is licensed under the **MIT License**. See the [LICENSE](./LICENSE)
 
 ## 👨‍💼 Author
 
-Developed with 💡 by **Abdalrhman** from **Ai Solutions**  
-Connect: [LinkedIn](https://linkedin.com/) | [Email](mailto:abdalrhman30x@email.com)
-
+Developed with 💡 by **Abdalrhman Morida** from **Ai Solutions LLC** 
+Connect: [📬 Email](mailto:abdalrhman30x@email.com) | [📲 Telegram](https://t.me/abdalrhman10x)
 ---
 
 ## ⭐ Star This Repo
