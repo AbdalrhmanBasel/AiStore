@@ -37,7 +37,6 @@ Traditional recommendation systems use collaborative filtering or content-based 
 - Building a **product-user interaction graph**
 - Learning **graph embeddings** with **GraphSAGE**
 - Using those embeddings for **real-time recommendations**
-
 ---
 
 ## 📁 Project Structure
@@ -151,7 +150,7 @@ This project is licensed under the **MIT License**. See the [LICENSE](./LICENSE)
 ## 👨‍💼 Author
 
 Developed with 💡 by **Abdalrhman** from **Ai Solutions**  
-Connect: [LinkedIn](https://linkedin.com/) | [Email](mailto:your@email.com)
+Connect: [LinkedIn](https://linkedin.com/) | [Email](mailto:abdalrhman30x@email.com)
 
 ---
 
@@ -160,11 +159,5 @@ Connect: [LinkedIn](https://linkedin.com/) | [Email](mailto:your@email.com)
 If you find this project useful, give it a ⭐ to help others discover it!
 ```
 
----
-
-Would you like me to:
-- Generate the actual Markdown file to download?
-- Write a `requirements.txt` next?
-- Add badges or visual banners to brand the project further?
 
 Let’s take this project to a publishable, open-source-ready level.
