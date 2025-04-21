@@ -6,13 +6,15 @@ import pandas as pd
 from utils.data import load_data
 from utils.clean_reviews import clean_reviews
 from utils.clean_meta import clean_meta
-from utils.features import (
+from utils.features_matrix import (
     create_feature_matrix,
     feature_engineering,
     normalize_features
 )
 from utils.graphs import construct_graph, save_graph
 from utils.split_data import split_edges, create_data_for_link_prediction
+
+
 
 
 def preprocess_data():

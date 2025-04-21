@@ -194,10 +194,6 @@ recommender/artifacts/metrics/**
 *.pkl
 
 
-
-
-
-
 recommender/data/*
 recommender/artifacts/models/**
 recommender/artifacts/logs/**

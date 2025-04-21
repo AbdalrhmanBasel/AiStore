@@ -1,37 +1,45 @@
-import recommender.settings as cfg
+import os
+import sys
 import torch
-import torch.optim as optim
 import torch.nn as nn
+import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.tensorboard import SummaryWriter
-from utils.checkpoints import save_checkpoint, load_checkpoint
 from typing import Optional, Dict, Any
-import logging
-from torch.cuda.amp import autocast, GradScaler
-from torch.utils.data import DataLoader
-from src._1_model_selection.GraphSAGEModelV1 import GraphSAGEModelV1
-from src._3_evaluating_model.evaluate_model import evaluate_model 
+from src._2_training_model.utils.checkpoints import save_checkpoint, load_checkpoint
+from src._1_model_selection.GraphSAGEModelV0 import GraphSAGEModelV0
+from src._3_evaluating_model.evaluate_model import evaluate_model
 from src._3_evaluating_model.LinkPredictionLoss import LinkPredictionLoss
-import settings as cfg
+from src._2_training_model.utils.logger import setup_logger
+from src._0_data_preprocessing.utils.graph_dataset_loader import GraphDataset
+from settings import * 
+import pandas as pd
+
+# Add project root to sys.path
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+sys.path.append(PROJECT_ROOT)
 
 # Setup logger
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
-logger.addHandler(ch)
+logger = setup_logger(__name__)
 
 # TensorBoard Setup
-tb_writer = SummaryWriter()
+tb_writer = SummaryWriter(log_dir=TENSORBOARD_LOG_DIR)
 
-def train_step(model: nn.Module, data: Any, loss_fn: nn.Module, optimizer: torch.optim.Optimizer, 
-               gradient_clip: Optional[float] = None, scaler: Optional[GradScaler] = None) -> torch.Tensor:
+
+def train_step(
+    model: nn.Module,
+    data: Any,
+    loss_fn: nn.Module,
+    optimizer: torch.optim.Optimizer,
+    gradient_clip: Optional[float] = None,
+    scaler: Optional[torch.cuda.amp.GradScaler] = None,
+) -> torch.Tensor:
     """
     Performs a single training step with mixed precision support (autocast) for efficiency.
     """
     model.train()
-    
+
     # Get node features (x), edge index (edge_index), and labels (y)
     x, edge_index, y = data.x, data.edge_index, data.y
 
@@ -39,7 +47,7 @@ def train_step(model: nn.Module, data: Any, loss_fn: nn.Module, optimizer: torch
     optimizer.zero_grad()
 
     # Mixed precision (use autocast for efficient training)
-    with autocast(enabled=True):  # Enable mixed-precision for forward pass
+    with torch.cuda.amp.autocast(enabled=True):  # Enable mixed-precision for forward pass
         output = model(x, edge_index)
         loss = loss_fn(output, y)
 
@@ -63,30 +71,38 @@ def train_step(model: nn.Module, data: Any, loss_fn: nn.Module, optimizer: torch
     return loss
 
 
-
-def train_model(model: nn.Module, train_dataloader: DataLoader, val_dataloader: Optional[DataLoader], 
-                loss_fn: nn.Module, optimizer: torch.optim.Optimizer, 
-                lr: float = cfg.LEARNING_RATE, epochs: int = cfg.EPOCHS, device: str = "cpu", 
-                scheduler: Optional[_LRScheduler] = None,
-                weight_decay: float = 0.0, momentum: float = cfg.MOMENTUM, 
-                gradient_clip: Optional[float] = None, early_stopping: Optional[Dict[str, Any]] = None, 
-                checkpoint_path: Optional[str] = None, resume_from_checkpoint: bool = False, 
-                config: Optional[Dict[str, Any]] = None, print_interval: int = 10) -> None:
+def train_model(
+    model: nn.Module,
+    train_dataloader: DataLoader,
+    val_dataloader: Optional[DataLoader],
+    loss_fn: nn.Module,
+    optimizer: torch.optim.Optimizer,
+    lr: float = LEARNING_RATE,
+    epochs: int = EPOCHS,
+    device: str = "cpu",
+    scheduler: Optional[_LRScheduler] = None,
+    weight_decay: float = 0.0,
+    momentum: float = MOMENTUM,
+    gradient_clip: Optional[float] = None,
+    early_stopping: Optional[Dict[str, Any]] = None,
+    checkpoint_path: Optional[str] = None,
+    resume_from_checkpoint: bool = False,
+    print_interval: int = 10,
+) -> None:
     """
     A customizable training loop with mixed precision support, early stopping, and TensorBoard logging.
     Supports model checkpoint saving/loading, optimizer and scheduler state saving/loading.
     """
-
     # Set device and move model to the correct device
     device = torch.device(device if torch.cuda.is_available() else "cpu")
     model.to(device)
 
     # Initialize mixed-precision scaler
-    scaler = GradScaler()
+    scaler = torch.cuda.amp.GradScaler()
 
     # Initialize or load the scheduler
     if scheduler is None:
-        scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+        scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=LR_STEP_SIZE, gamma=LR_GAMMA)
 
     # Initialize early stopping
     if early_stopping:
@@ -106,7 +122,7 @@ def train_model(model: nn.Module, train_dataloader: DataLoader, val_dataloader: 
     for epoch in range(start_epoch, epochs):
         model.train()
         epoch_loss = 0.0
-        
+
         # Iterate over training data
         for data in train_dataloader:
             data = data.to(device)  # Move data to device
@@ -131,7 +147,7 @@ def train_model(model: nn.Module, train_dataloader: DataLoader, val_dataloader: 
 
         # Logging progress
         if (epoch + 1) % print_interval == 0:
-            logger.info(f"Epoch {epoch+1}/{epochs}, Loss: {epoch_loss:.4f}")
+            logger.info(f"Epoch {epoch + 1}/{epochs}, Loss: {epoch_loss:.4f}")
             if val_dataloader:
                 logger.info(f"Validation Loss: {val_loss:.4f}")
 
@@ -157,23 +173,41 @@ def train_model(model: nn.Module, train_dataloader: DataLoader, val_dataloader: 
     if checkpoint_path:
         save_checkpoint(model, optimizer, epochs, epoch_loss, checkpoint_path, scheduler)
 
+    # Close TensorBoard writer
+    tb_writer.close()
 
 
+from torch_geometric.data import DataLoader  # Use PyTorch Geometric's DataLoader
 
-
-def training():
-    # Prepare dataset and dataloaders
-    train_dataset = GraphDataset(cfg.TRAIN_DATA_PATH)
-    val_dataset = GraphDataset(cfg.VAL_DATA_PATH)
+def train():
+    """
+    Function to handle the training of the model.
+    Includes steps like loading data, defining a model, training, and saving the model.
+    """
+    logger.info("Starting model training...")
     
-    train_dataloader = DataLoader(train_dataset, batch_size=cfg.BATCH_SIZE, shuffle=True)
-    val_dataloader = DataLoader(val_dataset, batch_size=cfg.BATCH_SIZE)
+    # Prepare dataset and dataloaders
+    train_dataset = GraphDataset(TRAIN_DATA_PATH)
+    val_dataset = GraphDataset(VAL_DATA_PATH)
+
+    # Use PyTorch Geometric's DataLoader
+    train_dataloader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
+    val_dataloader = DataLoader(val_dataset, batch_size=BATCH_SIZE)
+
+    feature_matrix = pd.read_csv(FEATURES_MATRIX_PATH)
+    INPUT_DIM = feature_matrix.shape[1]
 
     # Initialize the model
-    model = GraphSAGEModelV1(input_dim=128, hidden_dim=64, output_dim=32)
+    model = GraphSAGEModelV0(
+        input_dim=INPUT_DIM,
+        hidden_dim=HIDDEN_DIM,
+        output_dim=OUTPUT_DIM,
+        num_layers=NUM_LAYERS,
+        dropout=DROPOUT_RATE,
+    )
 
     # Initialize the optimizer
-    optimizer = optim.Adam(model.parameters(), lr=cfg.LEARNING_RATE, weight_decay=cfg.WEIGHT_DECAY)
+    optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=L2_REGULARIZATION)
 
     # Define the loss function
     loss_fn = LinkPredictionLoss()
@@ -185,11 +219,15 @@ def training():
         val_dataloader=val_dataloader,
         loss_fn=loss_fn,
         optimizer=optimizer,
-        epochs=cfg.EPOCHS,
-        device=cfg.DEVICE,
+        epochs=EPOCHS,
+        device="cuda" if ENABLE_CUDA else "cpu",
         scheduler=None,  # You can pass a learning rate scheduler if you want
-        gradient_clip=cfg.GRADIENT_CLIP,
-        early_stopping=cfg.EARLY_STOPPING,
-        checkpoint_path=cfg.CHECKPOINT_PATH,
-        resume_from_checkpoint=cfg.RESUME_FROM_CHECKPOINT
+        gradient_clip=GRADIENT_CLIP,
+        early_stopping={'patience': PATIENCE, 'metric': 'loss'},
+        checkpoint_path=os.path.join(CHECKPOINT_DIR, f"{MODEL_NAME}.pt"),
+        resume_from_checkpoint=False,
     )
+
+
+if __name__ == "__main__":
+    train()
