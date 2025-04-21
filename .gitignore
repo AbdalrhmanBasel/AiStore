@@ -204,3 +204,4 @@ recommender/artifacts/metrics/**
 
 
 
+recommender/logs/tensorboard*
