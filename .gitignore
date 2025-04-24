@@ -175,7 +175,7 @@ recommender/data/processed/**
 recommender/artifacts/models/**
 recommender/artifacts/logs/**
 recommender/artifacts/metrics/**
-
+recommender/artifacts/hyperparameters/**
 
 
 # === FILE TYPES TO IGNORE ===

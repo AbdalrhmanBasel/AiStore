@@ -1,341 +1,3 @@
-# import os
-# import torch
-# import torch.nn.functional as F
-# from torch_geometric.loader import DataLoader  
-# from typing import Dict
-
-# from src._1_model_selection.GraphSAGEModelV0 import GraphSAGEModelV0
-# import torch_geometric
-# from settings import PROCESSED_DATA_DIR, CHECKPOINT_DIR, MODEL_NAME, ENABLE_CUDA, HIDDEN_DIM, OUTPUT_DIM, NUM_LAYERS, NUM_LAYERS, DROPOUT_RATE
-
-# def link_prediction_loss(pos_edge_index, neg_edge_index, z):
-#     # pos_edge_index: positive edge indices (real edges in the graph)
-#     # neg_edge_index: negative edge indices (non-existing edges)
-    
-#     # Get node embeddings for positive and negative edges
-#     pos_edge_emb = (z[pos_edge_index[0]] * z[pos_edge_index[1]]).sum(dim=1)
-#     neg_edge_emb = (z[neg_edge_index[0]] * z[neg_edge_index[1]]).sum(dim=1)
-    
-#     # Positive edge score (the higher, the more likely it is a real edge)
-#     pos_loss = F.logsigmoid(pos_edge_emb).mean()
-    
-#     # Negative edge score (the lower, the more likely it is a fake edge)
-#     neg_loss = F.logsigmoid(-neg_edge_emb).mean()
-    
-#     return -(pos_loss + neg_loss)
-
-
-# def precision_at_k(scores: torch.Tensor, labels: torch.Tensor, k: int) -> float:
-#     """
-#     Compute precision@k for the given scores and labels.
-#     """
-#     _, indices = torch.topk(scores, k)
-#     top_k_labels = labels[indices]
-#     precision = top_k_labels.sum().item() / k
-#     return precision
-
-
-# def recall_at_k(scores: torch.Tensor, labels: torch.Tensor, k: int) -> float:
-#     """
-#     Compute recall@k for the given scores and labels.
-#     """
-#     _, indices = torch.topk(scores, k)
-#     top_k_labels = labels[indices]
-#     recall = top_k_labels.sum().item() / labels.sum().item()
-#     return recall
-
-
-# def ndcg_score(scores: torch.Tensor, labels: torch.Tensor) -> float:
-#     """
-#     Compute Normalized Discounted Cumulative Gain (NDCG) for the given scores and labels.
-#     """
-#     _, indices = torch.sort(scores, descending=True)
-#     sorted_labels = labels[indices]
-#     dcg = (sorted_labels / torch.log2(torch.arange(len(sorted_labels), dtype=torch.float) + 2)).sum().item()
-#     ideal_labels, _ = torch.sort(labels, descending=True)
-#     idcg = (ideal_labels / torch.log2(torch.arange(len(ideal_labels), dtype=torch.float) + 2)).sum().item()
-#     return dcg / idcg if idcg > 0 else 0.0
-
-
-
-
-
-# def evaluate():
-#     """
-#     Function to evaluate the trained model.
-#     Includes steps like model evaluation on test data and performance metrics calculation.
-#     """
-#     print("Evaluating the model...")
-
-#     # Step 1: Load test data
-#     try:
-#         test_data_path = os.path.join(PROCESSED_DATA_DIR, "graph/positives/test_data.pt")
-#         test_neg_samples_path = os.path.join(PROCESSED_DATA_DIR, "graph/negatives/test_neg_samples.pt")
-
-#         if not os.path.exists(test_data_path):
-#             raise FileNotFoundError(f"Test data file not found at {test_data_path}")
-#         if not os.path.exists(test_neg_samples_path):
-#             raise FileNotFoundError(f"Negative samples file not found at {test_neg_samples_path}")
-
-#         test_data = torch.load(test_data_path, weights_only=False)
-#         test_neg_samples = torch.load(test_neg_samples_path, weights_only=False)
-
-#         # Debugging: Print the type and structure of loaded data
-#         print(f"Type of test_data: {type(test_data)}")
-#         print(f"Type of test_neg_samples: {type(test_neg_samples)}")
-
-#         # Ensure the loaded data is of the correct type
-#         if not isinstance(test_data, torch_geometric.data.Data):
-#             raise TypeError("test_data must be an instance of torch_geometric.data.Data")
-#         if not isinstance(test_neg_samples, torch_geometric.data.Data):
-#             # Attempt to convert test_neg_samples to Data if it's a dictionary
-#             if isinstance(test_neg_samples, dict):
-#                 test_neg_samples = torch_geometric.data.Data(
-#                     x=test_neg_samples.get("x", None),
-#                     edge_index=test_neg_samples.get("edge_index", None),
-#                     y=test_neg_samples.get("y", None),
-#                 )
-#             else:
-#                 raise TypeError("test_neg_samples must be an instance of torch_geometric.data.Data")
-
-#     except Exception as e:
-#         print(f"Error loading test data: {e}")
-#         raise
-
-#     # Step 2: Load the trained model
-#     model_path = os.path.join(CHECKPOINT_DIR, f"{MODEL_NAME}.pt")
-#     if not os.path.exists(model_path):
-#         raise FileNotFoundError(f"Model checkpoint not found at {model_path}")
-
-#     try:
-#         # Load the checkpoint (contains state_dict and metadata)
-#         checkpoint = torch.load(model_path, map_location=torch.device('cpu'))
-
-#         # Initialize the model architecture
-#         input_dim = test_data.num_node_features  # Get input dimensions from test data
-#         model = GraphSAGEModelV0(
-#             input_dim=input_dim,
-#             hidden_dim=HIDDEN_DIM,
-#             output_dim=OUTPUT_DIM,
-#             num_layers=NUM_LAYERS,
-#             dropout=DROPOUT_RATE,
-#         )
-
-#         # Load the model weights from the checkpoint
-#         model.load_state_dict(checkpoint['model_state_dict'])
-
-#     except Exception as e:
-#         print(f"Error loading the model: {e}")
-#         raise
-
-#     # Move the model to the appropriate device
-#     device = "cuda" if ENABLE_CUDA and torch.cuda.is_available() else "cpu"
-#     model.to(device)
-
-#     # Step 3: Evaluate the model
-#     evaluate_testing_model(
-#         model=model,
-#         test_data=test_data,
-#         test_neg_samples=test_neg_samples,
-#         device=device,
-#     )
-
-# def evaluate_testing_model(
-#     model: torch.nn.Module,
-#     test_data: torch.Tensor,
-#     test_neg_samples: torch.Tensor,
-#     device: str,
-# ) -> None:
-#     """
-#     Evaluate the model on the test dataset.
-#     This function calculates ranking metrics like precision@k, recall@k, and NDCG.
-#     """
-#     if not isinstance(model, torch.nn.Module):
-#         raise TypeError("model must be an instance of torch.nn.Module")
-#     if not isinstance(test_data, torch_geometric.data.Data):
-#         raise TypeError("test_data must be an instance of torch_geometric.data.Data")
-#     if not isinstance(test_neg_samples, torch_geometric.data.Data):
-#         raise TypeError("test_neg_samples must be an instance of torch_geometric.data.Data")
-
-#     model.eval()
-#     all_scores, all_labels = [], []
-
-#     with torch.no_grad():
-#         combined_data = torch.cat([test_data, test_neg_samples], dim=0).to(device)
-#         labels = torch.cat([torch.ones(len(test_data)), torch.zeros(len(test_neg_samples))]).to(device)
-
-#         output = model(combined_data.x, combined_data.edge_index)
-
-#         src_embeddings = F.normalize(output[combined_data.edge_index[0]], p=2, dim=1)
-#         dst_embeddings = F.normalize(output[combined_data.edge_index[1]], p=2, dim=1)
-#         edge_scores = (src_embeddings * dst_embeddings).sum(dim=1)
-
-#         all_scores.append(edge_scores.cpu())
-#         all_labels.append(labels.cpu())
-
-#     all_scores = torch.cat(all_scores)
-#     all_labels = torch.cat(all_labels)
-
-#     precision = precision_at_k(all_scores, all_labels, k=10)
-#     recall = recall_at_k(all_scores, all_labels, k=10)
-#     ndcg = ndcg_score(all_scores, all_labels)
-
-#     print("Evaluation Results:")
-#     print(f"Precision@10: {precision:.4f}")
-#     print(f"Recall@10: {recall:.4f}")
-#     print(f"NDCG: {ndcg:.4f}")
-
-
-
-# import torch
-# from sklearn.metrics import precision_score, recall_score, ndcg_score
-# from torch_geometric.loader import DataLoader
-
-# def test_model(
-#     model: torch.nn.Module,
-#     test_dataloader: DataLoader,
-#     loss_fn: torch.nn.Module,
-#     device: str = "cpu"
-# ):
-#     """
-#     Evaluate the trained model on the test dataset.
-
-#     Args:
-#         model (torch.nn.Module): The trained model.
-#         test_dataloader (DataLoader): DataLoader for the test dataset.
-#         loss_fn (torch.nn.Module): Loss function used for evaluation.
-#         device (str): Device to run the evaluation on ('cpu' or 'cuda').
-
-#     Returns:
-#         dict: A dictionary containing evaluation metrics (loss, precision, recall, NDCG).
-#     """
-#     print("Starting model evaluation on test data...")
-
-#     # Set the model to evaluation mode
-#     model.eval()
-#     model.to(device)
-
-#     total_loss = 0.0
-#     all_labels = []
-#     all_predictions = []
-
-#     with torch.no_grad():  # Disable gradient computation
-#         for data in test_dataloader:
-#             data = data.to(device)
-
-#             # Forward pass: Get predictions
-#             output = model(data.x, data.edge_index)
-
-#             # Compute edge scores (dot product between connected nodes)
-#             src_embeddings = output[data.edge_index[0]]  # Source node embeddings
-#             dst_embeddings = output[data.edge_index[1]]  # Destination node embeddings
-#             edge_scores = (src_embeddings * dst_embeddings).sum(dim=1)  # Dot product for edge scores
-
-#             # Compute loss
-#             loss = loss_fn(edge_scores, data.y.float())
-#             total_loss += loss.item()
-
-#             # Collect labels and predictions
-#             all_labels.append(data.y.cpu().numpy())  # Ground truth labels
-#             all_predictions.append(torch.sigmoid(edge_scores).cpu().numpy())  # Predicted probabilities
-
-#     # Concatenate all labels and predictions
-#     all_labels = np.concatenate(all_labels)
-#     all_predictions = np.concatenate(all_predictions)
-
-#     # Convert predictions to binary labels (threshold = 0.5)
-#     binary_predictions = (all_predictions > 0.5).astype(int)
-
-#     # Compute evaluation metrics
-#     precision = precision_score(all_labels, binary_predictions)
-#     recall = recall_score(all_labels, binary_predictions)
-#     ndcg = ndcg_score([all_labels], [all_predictions])  # NDCG requires lists of lists
-
-#     # Average loss over all batches
-#     avg_loss = total_loss / len(test_dataloader)
-
-#     # Print evaluation results
-#     print(f"Test Loss: {avg_loss:.4f}")
-#     print(f"Precision: {precision:.4f}")
-#     print(f"Recall: {recall:.4f}")
-#     print(f"NDCG: {ndcg:.4f}")
-
-#     # Return metrics as a dictionary
-#     return {
-#         "loss": avg_loss,
-#         "precision": precision,
-#         "recall": recall,
-#         "ndcg": ndcg,
-#     }
-
-# def evaluate_test_model(
-#     test_data_path: str,
-#     checkpoint_path: str,
-#     hidden_dim: int,
-#     num_layers: int,
-#     dropout_rate: float,
-#     batch_size: int,
-#     device: str = "cpu"
-# ):
-#     """
-#     Evaluate the trained model on the test dataset.
-
-#     Args:
-#         test_data_path (str): Path to the test dataset file.
-#         checkpoint_path (str): Path to the saved model checkpoint.
-#         hidden_dim (int): Hidden dimension size for the model.
-#         num_layers (int): Number of layers in the model.
-#         dropout_rate (float): Dropout rate for the model.
-#         batch_size (int): Batch size for the DataLoader.
-#         device (str): Device to run the evaluation on ('cpu' or 'cuda').
-
-#     Returns:
-#         dict: A dictionary containing evaluation metrics (loss, precision, recall, NDCG).
-#     """
-#     print("Starting model evaluation...")
-
-#     # Load the test dataset
-#     test_dataset = GraphDataset(test_data_path)
-#     test_dataloader = DataLoader(test_dataset, batch_size=batch_size)
-
-#     # Initialize the model
-#     input_dim = test_dataset.num_node_features
-#     model = GraphSAGEModelV0(
-#         input_dim=input_dim,
-#         hidden_dim=hidden_dim,
-#         output_dim=1,  # Assuming binary classification (output_dim=1)
-#         num_layers=num_layers,
-#         dropout=dropout_rate,
-#     ).to(device)
-
-#     # Load the trained model weights
-#     try:
-#         checkpoint = torch.load(checkpoint_path, map_location=device)
-#         model.load_state_dict(checkpoint['model_state_dict'])
-#         print("Model weights loaded successfully.")
-#     except Exception as e:
-#         print(f"[ERROR] Failed to load model weights: {e}")
-#         raise
-
-#     # Define the loss function
-#     loss_fn = torch.nn.BCEWithLogitsLoss()
-
-#     # Test the model
-#     metrics = test_model(
-#         model=model,
-#         test_dataloader=test_dataloader,
-#         loss_fn=loss_fn,
-#         device=device
-#     )
-
-#     # Print metrics
-#     print("Evaluation Metrics:")
-#     for key, value in metrics.items():
-#         print(f"{key}: {value:.4f}")
-
-#     return metrics
-
-
 import torch
 import torch.nn.functional as F
 from torch_geometric.data import Data
@@ -458,79 +120,58 @@ def evaluate_model(
     test_neg_samples: Data,
     loss_fn: Optional[torch.nn.Module] = None,
     device: str = "cpu"
-):
+) -> Dict[str, float]:
     """
-    Evaluate the trained model on test data and compute ranking metrics.
-    
-    Args:
-        model (torch.nn.Module): Trained model.
-        test_data (Data): Test dataset containing positive edges.
-        test_neg_samples (Data): Test dataset containing negative edges.
-        loss_fn (Optional[torch.nn.Module]): Loss function (optional).
-        device (str): Device to run evaluation on ('cpu' or 'cuda').
-    
-    Returns:
-        dict: Dictionary containing evaluation metrics.
+    Evaluate the trained model on test data and compute ranking metrics,
+    filtering out any invalid edge indices to avoid CUDA asserts.
     """
-    if not isinstance(model, torch.nn.Module):
-        raise TypeError("model must be an instance of torch.nn.Module")
-    if not isinstance(test_data, Data):
-        raise TypeError("test_data must be an instance of torch_geometric.data.Data")
-    if not isinstance(test_neg_samples, Data):
-        raise TypeError("test_neg_samples must be an instance of torch_geometric.data.Data")
-
-    # Move model and data to the specified device
     model.eval()
     model.to(device)
     test_data = test_data.to(device)
-    test_neg_samples = test_neg_samples.to(device)
-
-    all_scores, all_labels = [], []
+    test_neg = test_neg_samples.to(device)
 
     with torch.no_grad():
-        # Get node embeddings
-        output = model(test_data.x, test_data.edge_index)
+        # 1) Get and normalize all node embeddings
+        z = model(test_data.x, test_data.edge_index)
+        z = F.normalize(z, p=2, dim=1)
 
-        # Compute scores for positive edges
-        src_embeddings = output[test_data.edge_index[0]]
-        dst_embeddings = output[test_data.edge_index[1]]
-        pos_scores = (src_embeddings * dst_embeddings).sum(dim=1)
+        # 2) Extract raw edge_index tensors
+        pos_ei = test_data.edge_index
+        neg_ei = test_neg.edge_index
 
-        # Compute scores for negative edges
-        src_embeddings_neg = output[test_neg_samples.edge_index[0]]
-        dst_embeddings_neg = output[test_neg_samples.edge_index[1]]
-        neg_scores = (src_embeddings_neg * dst_embeddings_neg).sum(dim=1)
+        # 3) Build masks so we only keep edges where both endpoints < z.size(0)
+        N = z.size(0)
+        pos_mask = (pos_ei[0] < N) & (pos_ei[1] < N)
+        neg_mask = (neg_ei[0] < N) & (neg_ei[1] < N)
 
-        # Combine scores and labels
-        all_scores.append(torch.cat([pos_scores.cpu(), neg_scores.cpu()]))
-        all_labels.append(torch.cat([torch.ones_like(pos_scores.cpu()), torch.zeros_like(neg_scores.cpu())]))
+        pos_ei = pos_ei[:, pos_mask]
+        neg_ei = neg_ei[:, neg_mask]
 
-    # Concatenate scores and labels
-    all_scores = torch.cat(all_scores)
-    all_labels = torch.cat(all_labels)
+        # 4) Compute dot-product scores on the filtered edges
+        pos_scores = (z[pos_ei[0]] * z[pos_ei[1]]).sum(dim=1)
+        neg_scores = (z[neg_ei[0]] * z[neg_ei[1]]).sum(dim=1)
 
-    # Compute ranking metrics
-    precision = precision_at_k(all_scores, all_labels, k=10)
-    recall = recall_at_k(all_scores, all_labels, k=10)
-    ndcg = ndcg_score(all_scores, all_labels)
+        # 5) Move back to CPU and concatenate with labels
+        scores = torch.cat([pos_scores.cpu(), neg_scores.cpu()])
+        labels = torch.cat([
+            torch.ones(pos_scores.size(0)),
+            torch.zeros(neg_scores.size(0))
+        ])
 
-    # Compute loss if provided
-    loss = None
-    if loss_fn:
-        loss = loss_fn(all_scores, all_labels.float())
+    # 6) Compute metrics
+    precision = precision_at_k(scores, labels, k=10)
+    recall    = recall_at_k(scores, labels, k=10)
+    ndcg      = ndcg_score(scores, labels)
 
-    # Print metrics
-    print(f"Precision@10: {precision:.4f}")
-    print(f"Recall@10: {recall:.4f}")
-    print(f"NDCG: {ndcg:.4f}")
-    if loss:
-        print(f"Loss: {loss.item():.4f}")
+    # 7) Optionally compute loss over the assembled scores+labels
+    loss = loss_fn(scores, labels.float()).item() if loss_fn else None
 
+    # 8) Return all results
     return {
-        "precision@10": precision,
-        "recall@10": recall,
-        "ndcg": ndcg,
-        "loss": loss.item() if loss else None,
+        "loss":      loss,
+        "precision": precision,
+        "recall":    recall,
+        "ndcg":      ndcg,
     }
 
 

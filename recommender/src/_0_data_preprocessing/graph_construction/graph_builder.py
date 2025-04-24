@@ -22,6 +22,79 @@ def encode_ids(
     return product2idx, user2idx
 
 
+# def construct_graph(
+#     meta_df: pd.DataFrame,
+#     meta_features_df: pd.DataFrame,
+#     reviews_df: pd.DataFrame,
+#     product_col: str = 'parent_asin',
+#     user_col: str = 'user_id',
+#     rating_col: str = 'rating',
+#     label_col: Optional[str] = None
+# ) -> Data:
+#     """
+#     Constructs a bipartite user-product graph for GNNs.
+
+#     Args:
+#         meta_df: Cleaned metadata (must include product_col).
+#         meta_features_df: DataFrame of numeric features (no index on product).
+#         reviews_df: Cleaned reviews (must include product_col, user_col, rating_col).
+#         product_col: Column name for product IDs.
+#         user_col: Column name for user IDs.
+#         rating_col: Column name for edge attributes (ratings).
+#         label_col: Optional product label column in meta_df.
+
+#     Returns:
+#         PyG Data object with x, edge_index, edge_attr, and optional y.
+#     """
+#     # Encode IDs
+#     product2idx, user2idx = encode_ids(meta_df, reviews_df, product_col, user_col)
+#     product_ids = list(product2idx.keys())
+
+#     # Build edge list and attributes
+#     edges = []
+#     edge_attrs = []
+#     for _, row in reviews_df.iterrows():
+#         pid = row[product_col]
+#         uid = row[user_col]
+#         if pid in product2idx and uid in user2idx:
+#             edges.append([user2idx[uid] + len(product2idx), product2idx[pid]])
+#             edge_attrs.append([row.get(rating_col, 0.0)])
+#     edge_index = torch.tensor(edges, dtype=torch.long).t().contiguous()
+#     edge_attr = torch.tensor(edge_attrs, dtype=torch.float)
+
+#     # Align feature matrix with products
+#     features_df = meta_features_df.copy()
+#     if product_col not in features_df.columns:
+#         features_df[product_col] = meta_df[product_col].values
+#     features_df = features_df.set_index(product_col)
+#     features_df = features_df.loc[product_ids]
+#     x_products = torch.tensor(features_df.values, dtype=torch.float)
+
+#     # Create user features as zeros
+#     x_users = torch.zeros((len(user2idx), x_products.size(1)), dtype=torch.float)
+
+#     # Concatenate
+#     x = torch.cat([x_products, x_users], dim=0)
+
+#     # After creating Data object:
+#     data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr)
+
+#     # Store counts for recommendation
+#     num_products = x_products.size(0)
+#     num_users = x_users.size(0)
+#     data.num_products = num_products
+#     data.num_users = num_users
+
+#     if label_col and label_col in meta_df.columns:
+#         labels = meta_df.set_index(product_col).loc[product_ids][label_col].values
+#         data.y = torch.tensor(labels, dtype=torch.long)
+
+#     return data
+
+import torch
+from torch_geometric.data import Data
+from typing import Optional
+
 def construct_graph(
     meta_df: pd.DataFrame,
     meta_features_df: pd.DataFrame,
@@ -32,59 +105,50 @@ def construct_graph(
     label_col: Optional[str] = None
 ) -> Data:
     """
-    Constructs a bipartite user-product graph for GNNs.
-
-    Args:
-        meta_df: Cleaned metadata (must include product_col).
-        meta_features_df: DataFrame of numeric features (no index on product).
-        reviews_df: Cleaned reviews (must include product_col, user_col, rating_col).
-        product_col: Column name for product IDs.
-        user_col: Column name for user IDs.
-        rating_col: Column name for edge attributes (ratings).
-        label_col: Optional product label column in meta_df.
-
-    Returns:
-        PyG Data object with x, edge_index, edge_attr, and optional y.
+    Constructs a bipartite user–product graph for GNNs.
     """
-    # Encode IDs
+    # 1) Build the product/user → integer maps
     product2idx, user2idx = encode_ids(meta_df, reviews_df, product_col, user_col)
     product_ids = list(product2idx.keys())
 
-    # Build edge list and attributes
+    # 2) Gather edges and ratings
     edges = []
     edge_attrs = []
     for _, row in reviews_df.iterrows():
-        pid = row[product_col]
-        uid = row[user_col]
+        pid, uid = row[product_col], row[user_col]
         if pid in product2idx and uid in user2idx:
+            # IMPORTANT: user2idx already includes the product‐count offset
             edges.append([user2idx[uid], product2idx[pid]])
             edge_attrs.append([row.get(rating_col, 0.0)])
     edge_index = torch.tensor(edges, dtype=torch.long).t().contiguous()
-    edge_attr = torch.tensor(edge_attrs, dtype=torch.float)
+    edge_attr  = torch.tensor(edge_attrs, dtype=torch.float)
 
-    # Align feature matrix with products
+    # 3) Build the node‐feature matrix x = [product_embeddings; user_embeddings]
+    #    – Align product features
     features_df = meta_features_df.copy()
     if product_col not in features_df.columns:
         features_df[product_col] = meta_df[product_col].values
-    features_df = features_df.set_index(product_col)
-    features_df = features_df.loc[product_ids]
+    features_df = features_df.set_index(product_col).loc[product_ids]
     x_products = torch.tensor(features_df.values, dtype=torch.float)
 
-    # Create user features as zeros
-    x_users = torch.zeros((len(user2idx), x_products.size(1)), dtype=torch.float)
+    #    – Zero‐pad users
+    x_users = torch.zeros(len(user2idx), x_products.size(1), dtype=torch.float)
 
-    # Concatenate
+    #    – Concatenate
     x = torch.cat([x_products, x_users], dim=0)
 
-    # Optional labels
-    y = None
+    # 4) Create the Data object
+    data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr)
+
+    # 5) Expose counts for recommendation
+    data.num_products = x_products.size(0)
+    data.num_users    = x_users.size(0)
+
+    # 6) Optional product‐level labels
     if label_col and label_col in meta_df.columns:
         labels = meta_df.set_index(product_col).loc[product_ids][label_col].values
-        y = torch.tensor(labels, dtype=torch.long)
+        data.y = torch.tensor(labels, dtype=torch.long)
 
-    data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr)
-    if y is not None:
-        data.y = y
     return data
 
 

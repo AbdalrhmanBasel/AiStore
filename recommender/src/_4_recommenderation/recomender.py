@@ -1,53 +1,71 @@
-import torch
 import os
-from settings import GRAPH_SAVE_PATH, CHECKPOINT_DIR, MODEL_NAME
+import torch
+from settings import GRAPH_SAVE_PATH, CHECKPOINT_DIR, MODEL_NAME, HIDDEN_DIM, OUTPUT_DIM, NUM_LAYERS, DROPOUT_RATE
+from src._1_model_selection.GraphSAGEModelV0 import GraphSAGEModelV0
 
-def generate_recommendations(user_id, top_k=5):
+
+def build_seen_item_dict(train_edges):
     """
-    Generate recommendations for a specific user using the trained GNN model.
-
-    Args:
-        user_id (int): The ID of the user for whom recommendations are generated.
-        top_k (int): The number of top recommendations to return.
-
-    Returns:
-        list: A list of recommended item IDs for the user.
-    """
-    print(f"Generating recommendations for user {user_id}...")
-
-    # Step 1: Load the trained model
-    model_path = os.path.join(CHECKPOINT_DIR, f"{MODEL_NAME}.pt")
-    if not os.path.exists(model_path):
-        raise FileNotFoundError(f"Model checkpoint not found at {model_path}")
+    Build a dictionary of seen items for each user.
     
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    model = torch.load(model_path)
-    model.to(device)
+    Args:
+        train_edges (torch.Tensor): Edge indices representing interactions.
+        
+    Returns:
+        dict: Dictionary mapping user IDs to sets of seen items.
+    """
+    seen_items_by_user = {}
+    src_nodes = train_edges[0].tolist()
+    dst_nodes = train_edges[1].tolist()
+    for u, v in zip(src_nodes, dst_nodes):
+        if u not in seen_items_by_user:
+            seen_items_by_user[u] = set()
+        seen_items_by_user[u].add(v)
+    return seen_items_by_user
+
+
+def recommender(user_id, features, edge_index, train_edges, top_k=10, model_path="./saved_models/graphsage_model.pt"):
+    """
+    Recommend items for a given user using the trained model.
+    
+    Args:
+        user_id (int): The ID of the user to recommend items for.
+        features (torch.Tensor): Node features.
+        edge_index (torch.Tensor): Graph edges.
+        train_edges (torch.Tensor): Training edges to exclude seen items.
+        top_k (int, optional): The number of top items to recommend (default is 10).
+        model_path (str, optional): Path to the saved model checkpoint.
+        
+    Returns:
+        tuple: Top-K item indices and corresponding scores.
+    """
+    # Load the pretrained model
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model = GraphSAGEModelV0(in_channels=features.size(1), hidden_channels=64, out_channels=32).to(device)
+    model.load_state_dict(torch.load(model_path, map_location=device))
     model.eval()
 
-    # Step 2: Load the graph data
-    graph_data_path = GRAPH_SAVE_PATH
-    if not os.path.exists(graph_data_path):
-        raise FileNotFoundError(f"Graph data not found at {graph_data_path}")
-    
-    graph_data = torch.load(graph_data_path)
-    graph_data.to(device)
+    # Move data to the appropriate device
+    features = features.to(device)
+    edge_index = edge_index.to(device)
 
-    # Step 3: Compute node embeddings using the trained model
+    # Generate embeddings
     with torch.no_grad():
-        node_embeddings = model(graph_data.x, graph_data.edge_index)
+        z = model(features, edge_index)
 
-    # Step 4: Extract user and item embeddings
-    user_embedding = node_embeddings[user_id].unsqueeze(0)  # Shape: [1, embedding_dim]
-    item_embeddings = node_embeddings[graph_data.num_users:]  # Items start after user nodes
+    # Compute similarity scores
+    if user_id >= len(z):
+        raise ValueError(f"User ID {user_id} is out of range.")
+    user_embedding = z[user_id]
+    scores = torch.matmul(z, user_embedding)
 
-    # Step 5: Compute similarity scores (e.g., cosine similarity)
-    similarity_scores = torch.nn.functional.cosine_similarity(user_embedding, item_embeddings)
+    # Filter seen items
+    seen_items = build_seen_item_dict(train_edges).get(user_id, set())
+    scores[user_id] = -1e9  # Don't recommend the user to themselves
+    for seen_item in seen_items:
+        scores[seen_item] = -1e9
 
-    # Step 6: Get top-k recommendations
-    top_k_scores, top_k_indices = torch.topk(similarity_scores, top_k)
-    recommended_item_ids = top_k_indices.cpu().numpy().tolist()
+    # Get top-K recommendations
+    top_k_scores, top_k_indices = torch.topk(scores, top_k)
 
-    print(f"Top-{top_k} recommendations for user {user_id}: {recommended_item_ids}")
-
-    return recommended_item_ids
+    return top_k_indices.cpu().numpy(), top_k_scores.cpu().numpy()
