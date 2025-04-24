@@ -40,9 +40,14 @@ SAMPLE_REVIEW_DATA_PATH = os.path.join(SAMPLE_DATA_DIR, "raw/reviews_small.csv")
 SAMPLE_CLEANED_META_DATA_PATH = os.path.join(SAMPLE_DATA_DIR, "cleaned/cleaned_metadata_small.jsonl")
 SAMPLE_CLEANED_REVIEW_DATA_PATH = os.path.join(SAMPLE_DATA_DIR, "cleaned/cleaned_reviews_small.csv")
 
-TRAIN_DATA_PATH = os.path.join(PROCESSED_DATA_DIR, "graph/positives/train_data.pt")
-VAL_DATA_PATH = os.path.join(PROCESSED_DATA_DIR, "graph/positives/val_data.pt")
-TEST_DATA_PATH = os.path.join(PROCESSED_DATA_DIR, "graph/positives/test_data.pt")
+# TRAIN_DATA_PATH = os.path.join(PROCESSED_DATA_DIR, "graph/positives/train_data.pt")
+# VAL_DATA_PATH = os.path.join(PROCESSED_DATA_DIR, "graph/positives/val_data.pt")
+# TEST_DATA_PATH = os.path.join(PROCESSED_DATA_DIR, "graph/positives/test_data.pt")
+
+
+TRAIN_DATA_PATH = os.path.join(PROCESSED_DATA_DIR, "graph/train_data.pt")
+VAL_DATA_PATH = os.path.join(PROCESSED_DATA_DIR, "graph/val_data.pt")
+TEST_DATA_PATH = os.path.join(PROCESSED_DATA_DIR, "graph/test_data.pt")
 
 SAMPLE_DATA_SIZE = 500
 DATA_CHUNK_SIZE = 100
@@ -55,7 +60,7 @@ MODEL_NAME = "GraphSAGEModelV0"  # Choose from available models like GraphSAGE, 
 HIDDEN_DIM = 128          # Dimensionality of hidden layers
 OUTPUT_DIM = 64           # Dimensionality of the output embeddings
 NUM_LAYERS = 2            # Number of GNN layers (stacked)
-ACTIVATION_FUNCTION = "relu"  # Activation function for the layers (options: "relu", "tanh", "sigmoid")
+ACTIVATION_FUNCTION = "relu"  # Activation function for the layers ("relu", "tanh", "sigmoid")
 
 DROPOUT_RATE = 0.5        # Dropout rate for regularization
 
@@ -125,7 +130,10 @@ SEARCH_SPACE = {
     "BATCH_SIZE": [32, 64, 128],
     "NUM_LAYERS": [2, 3, 4],
 }
-N_TRIALS = 50  
+N_TRIALS = 5  
+
+ARTIFFACTS_PATH = os.path.join(PROJECT_ROOT, "artifacts")
+HYPERPARAMETERS_PATH = os.path.join(ARTIFFACTS_PATH, "hyperparmeters/best_hyperparameters.txt")
 # --------------------------------------------------------------
 # Miscellaneous
 # --------------------------------------------------------------
@@ -147,3 +155,6 @@ def print_settings(settings_module):
 if __name__ == "__main__":
     import settings
     print_settings(settings)
+    
+
+

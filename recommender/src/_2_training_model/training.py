@@ -1,25 +1,18 @@
-# training.py
 import os
-import sys
 import torch
 from src._2_training_model.train_model import train_model
 from torch_geometric.loader import DataLoader  
 from src._1_model_selection.GraphSAGEModelV0 import GraphSAGEModelV0
-from src._0_data_preprocessing.utils.graph_dataset_loader import GraphDataset
+from src._0_data_preprocessing.graph_construction.GraphDataset import GraphDataset
+from src._2_training_model.utils.load_hyperparameters import load_best_hyperparameters
 from settings import (
     TRAIN_DATA_PATH,
     VAL_DATA_PATH,
-    BATCH_SIZE,
-    LEARNING_RATE,
-    EPOCHS,
     DEVICE,
     PATIENCE,
     CHECKPOINT_DIR,
     MODEL_NAME,
-    HIDDEN_DIM,
-    OUTPUT_DIM,
-    NUM_LAYERS,
-    DROPOUT_RATE,
+    HYPERPARAMETERS_PATH
 )
 
 
@@ -29,6 +22,18 @@ def training():
     Includes steps like loading data, defining a model, training, and saving the model.
     """
     print("Starting model training...")
+
+    # Load best hyperparameters from file
+    best_hyperparameters_file = HYPERPARAMETERS_PATH
+    hyperparams = load_best_hyperparameters(best_hyperparameters_file)
+    print(f"Loaded Hyperparameters: {hyperparams}")
+
+    # Extract hyperparameters
+    HIDDEN_DIM = hyperparams["HIDDEN_DIM"]
+    LEARNING_RATE = hyperparams["LEARNING_RATE"]
+    DROPOUT_RATE = hyperparams["DROPOUT_RATE"]
+    BATCH_SIZE = hyperparams["BATCH_SIZE"]
+    NUM_LAYERS = hyperparams["NUM_LAYERS"]
 
     # Load datasets using GraphDataset
     train_dataset = GraphDataset(TRAIN_DATA_PATH)
@@ -41,11 +46,11 @@ def training():
     # Dynamically determine input dimensions
     input_dim = train_dataset.num_node_features
 
-    # Initialize the model
+    # Initialize the model with loaded hyperparameters
     model = GraphSAGEModelV0(
         input_dim=input_dim,
         hidden_dim=HIDDEN_DIM,
-        output_dim=OUTPUT_DIM,
+        output_dim=1,  # Assuming binary classification (output_dim=1)
         num_layers=NUM_LAYERS,
         dropout=DROPOUT_RATE,
     ).to(DEVICE)
@@ -64,7 +69,7 @@ def training():
         val_dataloader=val_dataloader,
         loss_fn=loss_fn,
         optimizer=optimizer,
-        epochs=EPOCHS,
+        epochs=100,  # You can also load EPOCHS from hyperparameters if needed
         device=DEVICE,
         early_stopping={'patience': PATIENCE, 'metric': 'loss'},
         checkpoint_path=checkpoint_path,

@@ -7,7 +7,7 @@ from torch_geometric.loader import DataLoader
 from typing import Optional, Dict, Any
 from src._2_training_model.utils.checkpoints import save_checkpoint, load_checkpoint
 from src._2_training_model.train_step import train_step
-from recommender.src._3_evaluating_model.evaluate_model import evaluate_training_model
+from src._3_evaluating_model.evaluate_model import evaluate_training_model
 from settings import (
     CHECKPOINT_DIR,
     TENSORBOARD_LOG_DIR,

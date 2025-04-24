@@ -11,6 +11,10 @@ def train_step(model: nn.Module, data: Any, loss_fn: nn.Module, optimizer: torch
     # Extract node features, edge index, and labels from the data
     x, edge_index, y = data.x, data.edge_index, data.y
 
+    # Safety check for labels
+    if y is None:
+        raise ValueError("Labels (y) are missing in the data. Check preprocessing.")
+
     # Zero gradients
     optimizer.zero_grad()
 

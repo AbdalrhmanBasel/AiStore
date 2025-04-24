@@ -3,16 +3,16 @@ import os
 import optuna
 import torch
 from src._2_training_model.training import train_model
-from recommender.src._3_evaluating_model.evaluate_model import evaluate_training_model
+from src._3_evaluating_model.evaluate_model import evaluate_training_model
 from src._1_model_selection.GraphSAGEModelV0 import GraphSAGEModelV0
-from src._0_data_preprocessing.utils.graph_dataset_loader import GraphDataset
+from src._0_data_preprocessing.graph_construction.GraphDataset import GraphDataset
 from torch_geometric.loader import DataLoader
 from settings import (
     TRAIN_DATA_PATH,
     VAL_DATA_PATH,
     HYPERPARAMETER_EPOCHS,
     DEVICE,
-    CHECKPOINT_DIR,
+    ARTIFFACTS_PATH,
     HYPERPARAMETER_SEARCH,
     N_TRIALS,
     OUTPUT_DIM,
@@ -88,7 +88,7 @@ def run_hyperparameter_search():
         print(f"    {key}: {value}")
 
     # Save the best parameters to a file
-    best_params_path = os.path.join(CHECKPOINT_DIR, "best_hyperparameters.txt")
+    best_params_path = os.path.join(ARTIFFACTS_PATH, "hyperparmeters/best_hyperparameters.txt")
     with open(best_params_path, "w") as f:
         f.write("Best Hyperparameters:\n")
         for key, value in best_trial.params.items():

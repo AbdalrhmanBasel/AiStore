@@ -10,7 +10,6 @@ sys.path.append(PROJECT_ROOT)
 
 from settings import HIDDEN_DIM, OUTPUT_DIM, NUM_LAYERS, DROPOUT_RATE
 
-
 class GraphSAGEModelV0(torch.nn.Module):
     """
     A GraphSAGE-based model for recommendation systems.
