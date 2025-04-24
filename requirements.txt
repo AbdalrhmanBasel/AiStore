@@ -31,5 +31,5 @@ psutil>=7.0.0,<8.0
 nltk
 spacy
 pytest
-
+optuna
 

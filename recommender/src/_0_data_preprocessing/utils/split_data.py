@@ -3,6 +3,7 @@ import torch
 import numpy as np
 import random
 from torch_geometric.data import Data
+import torch_geometric
 
 from colorama import Fore, Style, init
 
@@ -112,6 +113,36 @@ def create_data_for_link_prediction(graph_data, num_negative_samples=10000):
     return data
 
 
+# def add_negative_samples(edge_data, graph_data, num_samples=None):
+#     """
+#     Generate negative samples (non-existent edges) for link prediction.
+
+#     Args:
+#         edge_data (torch.Tensor): Positive edge indices (shape [2, num_edges]).
+#         graph_data (torch_geometric.data.Data): Full graph data object.
+#         num_samples (int, optional): Number of negative samples to generate. Defaults to the number of positive edges.
+
+#     Returns:
+#         torch.Tensor: Tensor of negative edge indices (shape [2, num_samples]).
+#     """
+#     if num_samples is None:
+#         num_samples = edge_data.size(1)  # Default to the same number as positive edges
+
+#     num_nodes = graph_data.num_nodes
+#     all_edges = set((u.item(), v.item()) for u, v in edge_data.t())
+
+#     negative_samples = []
+#     while len(negative_samples) < num_samples:
+#         u = torch.randint(0, num_nodes, (1,)).item()
+#         v = torch.randint(0, num_nodes, (1,)).item()
+
+#         # Ensure u != v and (u, v) is not a positive edge
+#         if u != v and (u, v) not in all_edges and (v, u) not in all_edges:
+#             negative_samples.append([u, v])
+
+#     return torch.tensor(negative_samples, dtype=torch.long).t().contiguous()
+
+
 def add_negative_samples(edge_data, graph_data, num_samples=None):
     """
     Generate negative samples (non-existent edges) for link prediction.
@@ -122,7 +153,7 @@ def add_negative_samples(edge_data, graph_data, num_samples=None):
         num_samples (int, optional): Number of negative samples to generate. Defaults to the number of positive edges.
 
     Returns:
-        torch.Tensor: Tensor of negative edge indices (shape [2, num_samples]).
+        torch_geometric.data.Data: Data object containing negative samples.
     """
     if num_samples is None:
         num_samples = edge_data.size(1)  # Default to the same number as positive edges
@@ -139,7 +170,67 @@ def add_negative_samples(edge_data, graph_data, num_samples=None):
         if u != v and (u, v) not in all_edges and (v, u) not in all_edges:
             negative_samples.append([u, v])
 
-    return torch.tensor(negative_samples, dtype=torch.long).t().contiguous()
+    # Convert negative samples to tensor
+    neg_edge_index = torch.tensor(negative_samples, dtype=torch.long).t().contiguous()
+
+    # Create a Data object for negative samples
+    neg_labels = torch.zeros(neg_edge_index.shape[1], dtype=torch.float)  # Labels for negative samples
+    neg_graph = torch_geometric.data.Data(
+        x=graph_data.x,  # Use the same node features as the original graph
+        edge_index=neg_edge_index,
+        y=neg_labels,
+        num_nodes=graph_data.num_nodes
+    )
+
+    return neg_graph
+
+
+
+# def add_negative_samples(edge_data, graph_data, num_samples=None):
+#     """
+#     Generate negative samples (non-existent edges) for link prediction.
+
+#     Args:
+#         edge_data (torch.Tensor): Positive edge indices (shape [2, num_edges]).
+#         graph_data (torch_geometric.data.Data): Full graph data object.
+#         num_samples (int, optional): Number of negative samples to generate. Defaults to the number of positive edges.
+
+#     Returns:
+#         torch_geometric.data.Data: Data object containing negative samples.
+#     """
+#     if num_samples is None:
+#         num_samples = edge_data.size(1)  # Default to the same number as positive edges
+
+#     num_nodes = graph_data.num_nodes
+#     all_edges = set((u.item(), v.item()) for u, v in edge_data.t())
+
+#     negative_samples = []
+#     while len(negative_samples) < num_samples:
+#         u = torch.randint(0, num_nodes, (1,)).item()
+#         v = torch.randint(0, num_nodes, (1,)).item()
+
+#         # Ensure u != v and (u, v) is not a positive edge
+#         if u != v and (u, v) not in all_edges and (v, u) not in all_edges:
+#             negative_samples.append([u, v])
+
+#     # Convert negative samples to tensor
+#     neg_edge_index = torch.tensor(negative_samples, dtype=torch.long).t().contiguous()
+
+#     # Create a Data object for negative samples
+#     neg_labels = torch.zeros(neg_edge_index.shape[1], dtype=torch.float)  # Labels for negative samples
+#     neg_graph = torch_geometric.data.Data(
+#         x=graph_data.x,  # Use the same node features as the original graph
+#         edge_index=neg_edge_index,
+#         y=neg_labels,
+#         num_nodes=graph_data.num_nodes
+#     )
+
+#     return neg_graph
+
+
+
+
+
 
 
 def report_graph_details(graph_data):

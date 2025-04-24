@@ -12,26 +12,9 @@ from settings import HIDDEN_DIM, OUTPUT_DIM, NUM_LAYERS, DROPOUT_RATE
 
 
 class GraphSAGEModelV0(torch.nn.Module):
-    """
-    A GraphSAGE-based model for recommendation systems.
-
-    This model uses multiple stacked GraphSAGE layers to generate node embeddings.
-    It supports dropout for regularization and ReLU activation between layers.
-    """
-
     def __init__(self, input_dim: int, hidden_dim: int = HIDDEN_DIM,
                  output_dim: int = OUTPUT_DIM, num_layers: int = NUM_LAYERS,
                  dropout: float = DROPOUT_RATE):
-        """
-        Initialize the GraphSAGE model.
-
-        Args:
-            in_channels (int): The number of input features per node.
-            hidden_dim (int): The number of features in the hidden layers.
-            output_dim (int): The number of output features per node (embedding size).
-            num_layers (int): Number of GraphSAGE layers.
-            dropout (float): Dropout rate for regularization.
-        """
         super(GraphSAGEModelV0, self).__init__()
 
         # Validate the number of layers
@@ -45,7 +28,6 @@ class GraphSAGEModelV0(torch.nn.Module):
         # Define GraphSAGE layers
         self.convs = torch.nn.ModuleList()
         self.convs.append(SAGEConv(input_dim, hidden_dim))  # Input layer
-        
         for _ in range(num_layers - 2):
             self.convs.append(SAGEConv(hidden_dim, hidden_dim))  # Hidden layers
         self.convs.append(SAGEConv(hidden_dim, output_dim))  # Output layer
@@ -53,31 +35,19 @@ class GraphSAGEModelV0(torch.nn.Module):
         # Dropout layer
         self.dropout_layer = torch.nn.Dropout(dropout)
 
+        # Add a decoder for edge scoring
+        self.decoder = torch.nn.Linear(output_dim, 1)  # Outputs a single scalar score per edge
+
     def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
-        """
-        Forward pass through the GraphSAGE model.
-
-        Args:
-            x (torch.Tensor): A tensor of node features.
-            edge_index (torch.Tensor): A tensor of edge indices defining the graph.
-
-        Returns:
-            torch.Tensor: The output node embeddings after the GraphSAGE layers.
-        """
         # Propagate through GraphSAGE layers
         for i in range(self.num_layers):
             x = self.convs[i](x, edge_index)
-
-            # Apply ReLU activation (except for the last layer)
             if i != self.num_layers - 1:
                 x = F.relu(x)
-
-            # Apply Dropout (except for the last layer)
-            if i != self.num_layers - 1:
                 x = self.dropout_layer(x)
 
-        return x
-
+        # Decode edge scores using the decoder
+        return self.decoder(x)  # Output edge-level scores
 
 if __name__ == "__main__":
     """

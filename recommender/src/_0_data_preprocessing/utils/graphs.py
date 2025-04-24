@@ -116,3 +116,34 @@ def load_graph_numpy(dir_path: str = "graph_np") -> Data:
     data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr)
     print(f"[INFO] Graph loaded from NumPy: {x.shape[0]} nodes, {edge_index.shape[1]} edges")
     return data
+
+def create_labeled_graph(pos_edges, neg_samples, num_nodes):
+    """
+    Combines positive and negative edges into a single graph with labels.
+
+    Args:
+        pos_edges (torch.Tensor): Positive edge indices (shape [2, num_pos_edges]).
+        neg_samples (torch_geometric.data.Data): Negative samples as a Data object.
+        num_nodes (int): Total number of nodes in the graph.
+
+    Returns:
+        torch_geometric.data.Data: Combined graph with labeled edges.
+    """
+    # Extract negative edge indices from the Data object
+    neg_edge_index = neg_samples.edge_index
+
+    # Combine positive and negative edges
+    all_edges = torch.cat([pos_edges, neg_edge_index], dim=1)
+
+    # Create labels: 1 for positive edges, 0 for negative edges
+    pos_labels = torch.ones(pos_edges.shape[1], dtype=torch.float)
+    neg_labels = torch.zeros(neg_edge_index.shape[1], dtype=torch.float)
+    all_labels = torch.cat([pos_labels, neg_labels], dim=0)
+
+    # Return the combined graph as a Data object
+    return torch_geometric.data.Data(
+        x=torch.eye(num_nodes),  # Use identity matrix as node features (if none provided)
+        edge_index=all_edges,
+        y=all_labels,
+        num_nodes=num_nodes
+    )

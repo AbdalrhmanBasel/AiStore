@@ -44,8 +44,8 @@ TRAIN_DATA_PATH = os.path.join(PROCESSED_DATA_DIR, "graph/positives/train_data.p
 VAL_DATA_PATH = os.path.join(PROCESSED_DATA_DIR, "graph/positives/val_data.pt")
 TEST_DATA_PATH = os.path.join(PROCESSED_DATA_DIR, "graph/positives/test_data.pt")
 
-SAMPLE_DATA_SIZE = 100
-DATA_CHUNK_SIZE = 50
+SAMPLE_DATA_SIZE = 500
+DATA_CHUNK_SIZE = 100
 
 # --------------------------------------------------------------
 # Model Settings
@@ -66,7 +66,7 @@ MODEL_PATH = os.path.join(MODEL_DIR, f"{MODEL_NAME}.pt")
 # --------------------------------------------------------------
 BATCH_SIZE = 64           # Mini-batch size for training
 LEARNING_RATE = 1e-3      # Learning rate for optimizer
-EPOCHS = 50               # Number of epochs to train
+EPOCHS = 1000               # Number of epochs to train
 
 PATIENCE = 5              # Early stopping patience (if no improvement in validation performance)
 L2_REGULARIZATION = 1e-5  # L2 regularization weight decay
@@ -103,6 +103,7 @@ CPU_THREADS = 4          # Number of CPU threads to use for data loading
 
 ENABLE_CUDA = USE_GPU and torch.cuda.is_available()  # Check if GPU is available
 
+DEVICE = "cuda" if ENABLE_CUDA else "cpu"
 # --------------------------------------------------------------
 # Random Seed and Reproducibility
 # --------------------------------------------------------------
@@ -114,14 +115,17 @@ torch.cuda.manual_seed_all(SEED)
 # --------------------------------------------------------------
 # Hyperparameter Optimization (Optional)
 # --------------------------------------------------------------
-HYPERPARAMETER_SEARCH = False  # Set to True to enable hyperparameter search
-SEARCH_ALGORITHM = "grid"      # Options: "grid", "random", "bayesian"
+HYPERPARAMETER_SEARCH = True 
+HYPERPARAMETER_EPOCHS = 5
+SEARCH_ALGORITHM = "bayesian"  # Options: "grid", "random", "bayesian"
 SEARCH_SPACE = {
     "HIDDEN_DIM": [64, 128, 256],
     "LEARNING_RATE": [1e-3, 1e-4, 1e-5],
     "DROPOUT_RATE": [0.2, 0.5, 0.7],
+    "BATCH_SIZE": [32, 64, 128],
+    "NUM_LAYERS": [2, 3, 4],
 }
-
+N_TRIALS = 50  
 # --------------------------------------------------------------
 # Miscellaneous
 # --------------------------------------------------------------

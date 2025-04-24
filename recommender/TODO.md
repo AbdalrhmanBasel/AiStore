@@ -133,20 +133,20 @@ Absolutely — here's your Harvard-level structured **To-Do List** for building 
 
 ### ✅ **Phase 2: Data Loading (Mini-batching)**
 
-7. [ ] Load `processed_graph.pt`
-8. [ ] Create `NeighborLoader` for:
-   - [ ] Training loader
-   - [ ] Validation loader
-   - [ ] Test loader
+7. [x] Load `processed_graph.pt`
+8. [x] Create `NeighborLoader` for:
+   - [x] Training loader
+   - [x] Validation loader
+   - [x] Test loader
 9. [ ] Set sampling parameters: `batch_size`, `num_neighbors`, `shuffle`, etc.
 
 ---
 
 ### ✅ **Phase 3: Model Design & Training**
 
-10. [ ] Define `GraphSAGE` model class:
-    - [ ] Layers: `SAGEConv`, activation, dropout
-    - [ ] Forward pass logic
+10. [x] Define `GraphSAGE` model class:
+    - [x] Layers: `SAGEConv`, activation, dropout
+    - [x] Forward pass logic
 11. [ ] Create training loop:
     - [ ] Iterate over `train_loader`
     - [ ] Compute loss (`CrossEntropyLoss`)
@@ -174,13 +174,6 @@ Absolutely — here's your Harvard-level structured **To-Do List** for building 
     - [ ] Training
     - [ ] Evaluation
     - [ ] Recommending
-
----
-
-Would you like me to generate this as a Markdown checklist you can paste into your `README.md` or `project_notes.md` file in Obsidian?
-
-
-Certainly! Let’s dive deeper into each phase of the project for building a GNN-powered recommendation system tailored to eCommerce platforms, covering all steps, methodologies, and best practices.
 
 ---
 
