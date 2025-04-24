@@ -77,14 +77,14 @@ def run():
     # training()
 
     # Step 4: Evaluate the model
-    evaluate()
+    # evaluate()
     
     # # Step 5: Generate recommendations
-    # user_id = 42  # Replace with a valid user ID
-    # graph_data = torch.load(GRAPH_SAVE_PATH, weights_only=False)
-    # if user_id >= graph_data.num_users:
-    #     raise ValueError(f"User ID {user_id} is out of range. Maximum user ID is {graph_data.num_users - 1}.")
-    # generate_recommendations(user_id=user_id)
+    user_id = 42  # Replace with a valid user ID
+    graph_data = torch.load(GRAPH_SAVE_PATH, weights_only=False)
+    if user_id >= graph_data.num_users:
+        raise ValueError(f"User ID {user_id} is out of range. Maximum user ID is {graph_data.num_users - 1}.")
+    generate_recommendations(user_id=user_id)
 
 if __name__ == "__main__":
     run()
