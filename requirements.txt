@@ -33,3 +33,7 @@ spacy
 pytest
 optuna
 
+pyarrow
+fastparquet
+nltk
+torchmetrics

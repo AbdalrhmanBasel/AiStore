@@ -54,7 +54,7 @@ def evaluate_link_prediction(z, pos_edge_index, neg_edge_index, k=10):
         neg_edge_index (torch.Tensor): Negative test edge indices.
         k (int, optional): The top-K rank threshold for Hit@K (default is 10).
         
-    Returns:
+    Returnsw:
         tuple: MRR and Hit@K scores.
     """
     src_pos, dst_pos = pos_edge_index
