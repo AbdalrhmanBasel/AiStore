@@ -1,22 +1,29 @@
-import os
-import sys
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from logger import get_module_logger
 
-logger = get_module_logger("losses")
+class BPRLoss(nn.Module):
+    def __init__(self):
+        super(BPRLoss, self).__init__()
 
-PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__) + "/../../../")
-sys.path.append(PROJECT_ROOT)
+    def forward(self, user_embeddings, item_embeddings, positive_item_indices, negative_item_indices):
+        """
+        Compute the BPR loss for a batch of users.
 
+        :param user_embeddings: Tensor of user embeddings (shape: [num_users, embedding_dim])
+        :param item_embeddings: Tensor of item embeddings (shape: [num_items, embedding_dim])
+        :param positive_item_indices: Indices of positive items (shape: [batch_size])
+        :param negative_item_indices: Indices of negative items (shape: [batch_size])
+        :return: The BPR loss value
+        """
+        # Get the embeddings for positive and negative items for each user
+        positive_item_embeddings = item_embeddings[positive_item_indices]  # Shape: [batch_size, embedding_dim]
+        negative_item_embeddings = item_embeddings[negative_item_indices]  # Shape: [batch_size, embedding_dim]
 
-def bce_loss(pos_score, neg_score):
-    loss_fn = nn.BCEWithLogitsLoss()
-    pos_loss = loss_fn(pos_score, torch.ones_like(pos_score))
-    neg_loss = loss_fn(neg_score, torch.zeros_like(neg_score))
-    return pos_loss + neg_loss
+        # Compute predicted scores for positive and negative items by taking the dot product
+        positive_scores = torch.sum(user_embeddings * positive_item_embeddings, dim=1)  # [batch_size]
+        negative_scores = torch.sum(user_embeddings * negative_item_embeddings, dim=1)  # [batch_size]
 
-def generate_negative_samples(edge_index, num_nodes, num_neg_samples=5):
-    neg_edges = torch.randint(0, num_nodes, (2, edge_index.size(1) * num_neg_samples))
-    return neg_edges
+        # Compute the BPR loss: Log-sigmoid of the difference between positive and negative scores
+        loss = -torch.mean(F.logsigmoid(positive_scores - negative_scores))
+        return loss

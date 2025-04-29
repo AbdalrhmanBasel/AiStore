@@ -1,95 +1,83 @@
-from logger import get_module_logger
-import torch 
-from srcs._3_evaluating.losses.bce_loss import generate_negative_samples
-from torchmetrics.retrieval import RetrievalPrecision, RetrievalRecall, RetrievalNormalizedDCG
-
+import torch
 import os
 import sys
-
+import torch.nn.functional as F
 from logger import get_module_logger
 
-logger = get_module_logger("evaluater")
+logger = get_module_logger("evaluate")
 
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__) + "/../../../")
 sys.path.append(PROJECT_ROOT)
 
+def negative_sampling(
+    pos_edge_index: torch.Tensor,
+    num_nodes: int,
+    num_neg_samples: int
+) -> torch.Tensor:
+    """
+    Generate negative samples for link prediction.
+    
+    Args:
+        pos_edge_index: LongTensor of shape [2, E] containing existing (positive) edges.
+        num_nodes: Total number of nodes in the graph.
+        num_neg_samples: Number of negative edges to sample.
+    
+    Returns:
+        neg_edge_index: LongTensor of shape [2, num_neg_samples] containing sampled 
+                        node pairs that are not in pos_edge_index.
+    """
+    # Build a quick set of positive pairs for O(1) membership tests
+    pos_pairs = set(
+        (u.item(), v.item()) for u, v in pos_edge_index.t()
+    )
+    
+    neg_u = []
+    neg_v = []
+    while len(neg_u) < num_neg_samples:
+        # sample random endpoints
+        u = torch.randint(0, num_nodes, (1,), dtype=torch.long).item()
+        v = torch.randint(0, num_nodes, (1,), dtype=torch.long).item()
+        if (u, v) not in pos_pairs:
+            neg_u.append(u)
+            neg_v.append(v)
+    
+    return torch.tensor([neg_u, neg_v], dtype=torch.long)
 
 
-from logger import get_module_logger
-import torch
-from torch import Tensor
-from typing import Dict
-from torch_geometric.data import DataLoader
-from torchmetrics.retrieval import (
-    RetrievalPrecision,
-    RetrievalRecall,
-    RetrievalNormalizedDCG
-)
-from srcs._3_evaluating.losses.bce_loss import generate_negative_samples
 
-logger = get_module_logger("evaluater")
-
-def evaluater():
-    logger.info("🔄 Starting evaluating process.")
-    logger.info("✅ Evaluating process completed.")
+# def evaluater():
+#     logger.info("🔄 Starting evaluating process.")
+#     logger.info("✅ Evaluating process completed.")
 
 
-def evaluate(model, val_loader, k=10) -> Dict[str, float]:
+@torch.no_grad()
+def evaluate(model, loader, device="cpu"):
     model.eval()
+    total_metric = 0.0
+    for batch in loader:
+        batch = batch.to(device)
+        pos_idx = batch.edge_label_index
+        neg_idx = negative_sampling(pos_idx, batch.num_nodes, pos_idx.size(1))
 
-    # Define the device based on where the model is located (GPU or CPU)
-    device = next(model.parameters()).device
+        # now our model returns (pos_scores, neg_scores)
+        pos_scores, neg_scores = model(batch.x, batch.edge_index, pos_idx, neg_idx)
 
-    # Initialize metrics and move them to the device
-    precision_metric = RetrievalPrecision(top_k=k).to(device)
-    recall_metric    = RetrievalRecall(top_k=k).to(device)
-    ndcg_metric      = RetrievalNormalizedDCG(top_k=k).to(device)
+        # e.g. average BPR‐loss as proxy
+        total_metric += -F.logsigmoid(pos_scores - neg_scores).mean().item()
 
-    with torch.no_grad():
-        for batch in val_loader:
-            batch = batch.to(device)
+    return total_metric / len(loader)
 
-            # 1) Grab the POSITIVE edges for this batch:
-            pos_edge_index = batch.edge_label_index           # shape [2, num_pos]
-            num_pos = pos_edge_index.size(1)
 
-            # 2) Build targets = [1,...,1, 0,...,0] of length (num_pos + num_neg)
-            num_neg = num_pos * 5
-            targets = torch.cat((
-                torch.ones(num_pos, device=device),
-                torch.zeros(num_neg, device=device)
-            ))
+def compute_metrics(preds, targets):
+    """
+    Compute evaluation metrics (e.g., accuracy, AUC, etc.).
+    Args:
+        preds (torch.Tensor): The model predictions.
+        targets (torch.Tensor): The ground truth labels.
+    Returns:
+        metrics (dict): A dictionary containing evaluation metrics.
+    """
+    # Here we can compute metrics such as accuracy or AUC
+    accuracy = (preds.round() == targets).float().mean().item()
+    return {'accuracy': accuracy}
 
-            # 3) Get model scores on positives
-            pos_scores = model(batch.x, pos_edge_index)       # shape [num_pos]
-
-            # 4) Generate and score NEGATIVE edges
-            neg_edge_index = generate_negative_samples(
-                pos_edge_index, 
-                batch.num_nodes,
-                num_neg_samples=5
-            )
-            neg_scores = model(batch.x, neg_edge_index)       # shape [num_neg]
-
-            # 5) Concatenate predictions and build `indexes`
-            preds   = torch.cat((pos_scores, neg_scores))     # shape [num_pos+num_neg]
-            indexes = torch.zeros_like(preds, dtype=torch.long)
-
-            # 6) Update metrics
-            precision_metric.update(preds, targets, indexes)
-            recall_metric.update(preds, targets, indexes)
-            ndcg_metric.update(preds, targets, indexes)
-
-    # Compute final metrics
-    metrics = {
-        'precision@k': precision_metric.compute().item(),
-        'recall@k':    recall_metric.compute().item(),
-        'ndcg@k':      ndcg_metric.compute().item()
-    }
-
-    # Reset metrics for next evaluation
-    precision_metric.reset()
-    recall_metric.reset()
-    ndcg_metric.reset()
-
-    return metrics

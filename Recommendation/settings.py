@@ -61,16 +61,23 @@ TEST_DATA_SPLIT = 0.1
 # --------------------------------------------------------------
 # Model Settings
 # --------------------------------------------------------------
+MODEL_NAME = "GraphSAGE"
+IN_CHANNELS = 4
+HIDDEN_CHANNELS = 64
+OUT_CHANNELS = 32
+NUM_LAYERS = 2
+DROPOUT = 0.5
 
 
-SAVED_MODEL_PATH = os.path.join(PROJECT_ROOT, "artificats/")
+SAVED_MODEL_PATH = os.path.join(PROJECT_ROOT, "artificats/saved_models")
 # --------------------------------------------------------------
 # Training Settings
 # --------------------------------------------------------------
 
+
 BATCH_SIZE = 64           # Mini-batch size for training
-LEARNING_RATE = 1e-3      # Learning rate for optimizer
-EPOCHS = 1000               # Number of epochs to train
+LEARNING_RATE = 0.001   # Learning rate for optimizer
+EPOCHS = 100               # Number of epochs to train
 
 PATIENCE = 5              # Early stopping patience (if no improvement in validation performance)
 L2_REGULARIZATION = 1e-5  # L2 regularization weight decay
@@ -80,7 +87,7 @@ SCHEDULER = "StepLR"      # Scheduler type (options: "StepLR", "ExponentialLR", 
 LR_STEP_SIZE = 10         # Step size for learning rate decay (if using StepLR)
 LR_GAMMA = 0.7            # Learning rate decay factor (if using StepLR)
 GRADIENT_CLIP = 5.0       # Max norm for gradient clipping (set to None to disable)
- 
+
 
 # --------------------------------------------------------------
 # Evaluation Settings
