@@ -46,7 +46,7 @@ def train_model(model, train_loader, val_loader,
         gradient_clip: Gradient clipping threshold
     """
     # Log training configuration
-    logger.info("🚀 Starting training with configuration:")
+    logger.info("\n 🚀 Starting training with configuration:")
     logger.info(f"• Epochs: {epochs}")
     logger.info(f"• Batch size: {batch_size}")
     logger.info(f"• Learning rate: {lr}")

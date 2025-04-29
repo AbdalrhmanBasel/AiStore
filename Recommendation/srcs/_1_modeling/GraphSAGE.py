@@ -3,23 +3,32 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn import SAGEConv
 
-class GraphSAGE(nn.Module):
-    def __init__(self, in_dim, hidden_dim, out_dim, num_layers=2, dropout=0.2):
-        super().__init__()
-        self.convs = nn.ModuleList()
-        self.convs.append(SAGEConv(in_dim, hidden_dim))
-        for _ in range(num_layers - 2):
-            self.convs.append(SAGEConv(hidden_dim, hidden_dim))
-        self.convs.append(SAGEConv(hidden_dim, out_dim))
-        self.dropout = dropout
+# class GraphSAGE(nn.Module):
+#     def __init__(self, in_dim, hidden_dim, out_dim, num_layers=2, dropout=0.2):
+#         super().__init__()
+#         self.convs = nn.ModuleList()
+#         self.convs.append(SAGEConv(in_dim, hidden_dim))
+#         for _ in range(num_layers - 2):
+#             self.convs.append(SAGEConv(hidden_dim, hidden_dim))
+#         self.convs.append(SAGEConv(hidden_dim, out_dim))
+#         self.dropout = dropout
 
-    def forward(self, x, edge_index):
-        for i, conv in enumerate(self.convs):
-            x = conv(x, edge_index)
-            if i != len(self.convs) - 1:
-                x = F.relu(x)
-                x = F.dropout(x, p=self.dropout, training=self.training)
-        return x
+#     def forward(self, x, edge_index):
+#         for i, conv in enumerate(self.convs):
+#             x = conv(x, edge_index)
+#             if i != len(self.convs) - 1:
+#                 x = F.relu(x)
+#                 x = F.dropout(x, p=self.dropout, training=self.training)
+#         return x
+    
+
+
+
+
+
+
+
+
 
 class RecommendationModel(nn.Module):
     def __init__(self, user_dim, item_dim, hidden_dim=256, embed_dim=64):
@@ -33,3 +42,28 @@ class RecommendationModel(nn.Module):
         item_emb = self.item_encoder(item_x, item_edge_index)
         combined = torch.cat([user_emb, item_emb], dim=-1)
         return torch.sigmoid(self.scoring_head(combined))
+    
+
+    import torch
+from torch.nn import ModuleList, Linear, ReLU, Dropout
+from torch_geometric.nn import SAGEConv
+
+class GraphSAGE(torch.nn.Module):
+    def __init__(self, in_channels, hidden_channels, out_channels, num_layers=2, dropout=0.5):
+        super(GraphSAGE, self).__init__()
+        self.convs = ModuleList()
+        self.convs.append(SAGEConv(in_channels, hidden_channels))
+        
+        for _ in range(num_layers - 2):
+            self.convs.append(SAGEConv(hidden_channels, hidden_channels))
+
+        self.convs.append(SAGEConv(hidden_channels, out_channels))
+        self.relu = ReLU()
+        self.dropout = Dropout(dropout)
+
+    def forward(self, x, edge_index):
+        for conv in self.convs[:-1]:
+            x = self.relu(conv(x, edge_index))
+            x = self.dropout(x)
+        x = self.convs[-1](x, edge_index)
+        return x

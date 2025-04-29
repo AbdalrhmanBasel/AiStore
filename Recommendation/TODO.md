@@ -42,14 +42,14 @@ The project is designed not only to dominstrate that GNN recommendation systems 
 
 ## 🧠 PHASE 2: Model Training (GraphSAGE)
 
-- [ ] Implement GraphSAGE model in `gnn_model.py`
-- [ ] Use `NeighborLoader` from PyTorch Geometric for mini-batch training
+- [x] Implement GraphSAGE model in `gnn_model.py`
+- [x] Use `NeighborLoader` from PyTorch Geometric for mini-batch training
 - [ ] Define scoring head (dot product or MLP)
-- [ ] Define loss function (binary cross-entropy with negative sampling)
-- [ ] Add evaluation metrics:
-  - [ ] Precision@K
-  - [ ] Recall@K
-  - [ ] NDCG@K (Normalized Discounted Cumulative Gain)
+- [x] Define loss function (binary cross-entropy with negative sampling)
+- [x] Add evaluation metrics:
+  - [x] Precision@K
+  - [x] Recall@K
+  - [x] NDCG@K (Normalized Discounted Cumulative Gain)
 - [ ] Perform data splitting (80% train, 10% validation, 10% test)
 - [ ] Implement early stopping during training based on validation performance
 - [ ] Save trained model:
