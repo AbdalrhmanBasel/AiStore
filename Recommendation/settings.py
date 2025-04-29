@@ -69,7 +69,7 @@ NUM_LAYERS = 2
 DROPOUT = 0.5
 
 
-SAVED_MODEL_PATH = os.path.join(PROJECT_ROOT, "artificats/saved_models")
+SAVED_MODEL_PATH = os.path.join(PROJECT_ROOT, "artifacts/saved_models")
 # --------------------------------------------------------------
 # Training Settings
 # --------------------------------------------------------------

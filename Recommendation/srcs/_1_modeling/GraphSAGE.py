@@ -63,3 +63,15 @@ class GraphSAGE(nn.Module):
         neg_scores = (u_neg * v_neg).sum(dim=1)
 
         return pos_scores, neg_scores
+    
+    def get_embeddings(self, x: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
+        """
+        Extract node embeddings after performing the forward pass.
+        """
+        # Run through all convolution layers to get final node embeddings
+        for i, conv in enumerate(self.convs):
+            x = conv(x, edge_index)
+            if i != len(self.convs) - 1:
+                x = self.relu(x)
+                x = self.dropout(x)
+        return x
