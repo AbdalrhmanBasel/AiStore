@@ -164,6 +164,7 @@ def map_users_products_to_pyg(
     logger.info(f"Constructed PyG graph: {graph}")
     logger.info("==== Graph Construction Completed ====")
 
+    # ─── Save Graph ────────────────────────────────────────────────────────────
     save_graph_data(graph, id2idx)
 
     return graph, id2idx

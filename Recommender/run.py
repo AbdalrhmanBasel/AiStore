@@ -1,13 +1,10 @@
 import os
 import sys
-import torch
 
 from logger import get_module_logger
+
 from srcs._0_preprocessing.preprocessor import preprocessor
 from srcs._2_training.trainer import trainer
-from srcs._2_training.data_loaders import create_data_loaders
-from srcs._4_recommending.recomender import recommender
-
 # =======================
 # 📁 Project Setup
 # =======================
@@ -17,20 +14,21 @@ if PROJECT_ROOT not in sys.path:
 
 logger = get_module_logger("run")
 
+
 # =======================
 # 🚀 Main Pipeline
 # =======================
 def run():
     logger.info("🔄 Running program started.")
 
-    # 1) Preprocess
-    logger.info("➡️  Preprocessing data...")
-    graph, mappings, train_eidx, val_eidx, test_eidx = preprocessor()
-    logger.info("✅ Preprocessing completed.")
+    # # 1) Preprocess
+    # logger.info("➡️  Preprocessing data...")
+    # preprocessor()
+    # logger.info("✅ Preprocessing completed.")
 
     # # 2) Train
     logger.info("➡️  Training model...")
-    model = trainer(graph, mappings, train_eidx, val_eidx, test_eidx)
+    trainer()
     logger.info("✅ Training completed.")
 
     # # 3️⃣ Step 3: Save Node Embeddings

@@ -35,6 +35,7 @@ def preprocessor():
 
         # Get node features
         node_features = dataset.get_node_features()
+        # logger.info(f"Graph node features: {node_features}")
 
         # Split the edges into training, validation, and test sets
         graph, mappings = map_users_products_to_pyg(
@@ -56,7 +57,7 @@ def preprocessor():
         logger.info(f"Test edge index attached: {graph.test_edge_index.shape}")
 
         logger.info("==== Preprocessing Completed Successfully ====")
-        print(graph)
+        # print(graph)
         return graph, mappings, train_edge_index, val_edge_index, test_edge_index
 
     except Exception as e:
