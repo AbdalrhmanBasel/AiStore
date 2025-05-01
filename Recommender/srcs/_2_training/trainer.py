@@ -8,16 +8,14 @@ from logger import get_module_logger
 from srcs._1_modeling.GraphSAGE import GraphSAGE
 from srcs._2_training.train_model import train_model
 from srcs._3_evaluating.evaluate import evaluate
-from srcs._2_training.utils.save_models import save_model
+from srcs._2_training.utils.save_models import save_final_model
 
 from settings import (
-    SAVED_MODEL_DIR,
+    TRAINED_MODEL_PATH,
     CHECKPOINT_DIR,
     MODEL_NAME,
     LEARNING_RATE,
     EPOCHS,
-    PATIENCE,
-    GRADIENT_CLIP,
     TRAIN_DATA_PATH,
     VAL_DATA_PATH,
     TEST_DATA_PATH,
@@ -130,16 +128,10 @@ def trainer(device: str = "cpu"):
     # 5) Evaluate on the test set
     logger.info("📊 Evaluating on test set...")
     metrics = evaluate(trained_model, test_loader, device=device)
-    logger.info(f"✅ Test results — {metrics}")
-
-    # 6) Save the final model
-    save_model(
-        model=trained_model,
-        output_dir=SAVED_MODEL_DIR,
-        model_name=MODEL_NAME
-    )
-    logger.info(f"💾 Final model saved to {SAVED_MODEL_DIR}/{MODEL_NAME}_model.pth")
-
+    logger.info(f"✅ Test results — {metrics}")    
+    
+    
+    logger.info(f"💾 Final model saved to {TRAINED_MODEL_PATH}/{MODEL_NAME}_model.pth")
     logger.info("🎯 Training pipeline completed.")
 
     return trained_model, metrics

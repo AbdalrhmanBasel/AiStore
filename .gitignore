@@ -198,9 +198,11 @@ recommender/data/*
 recommender/artifacts/models/**
 recommender/artifacts/logs/**
 recommender/artifacts/metrics/**
+recommender/artifacts/visualizations/**
 *.csv
 *.jsonl
 *.pt
+*.png
 
 
 

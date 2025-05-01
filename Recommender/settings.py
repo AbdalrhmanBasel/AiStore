@@ -79,15 +79,18 @@ NUM_LAYERS = 2
 DROPOUT = 0.5
 
 # Model Saving
-SAVED_MODEL_DIR = os.path.join(PROJECT_ROOT, "artifacts/saved_models")
-CHECKPOINT_DIR = os.path.join(PROJECT_ROOT, "checkpoints")
-
+# SAVED_MODEL_DIR = os.path.join(PROJECT_ROOT, "artifacts/saved_models")
+SAVED_MODEL_DIR = os.path.join(PROJECT_ROOT, "artifacts/saved_models/GraphSAGE_model.pth")
+EMBEDDINGS_SAVE_PATH = os.path.join(PROJECT_ROOT, "artifacts/node_embeddings.pt")
+CHECKPOINT_DIR = os.path.join(PROJECT_ROOT, "artifacts/saved_checkpoints")
+TRAINED_MODEL_PATH = os.path.join(SAVED_MODEL_DIR, f"{MODEL_NAME}_final.pth")
+VISUALIZATION_PATH = os.path.join(PROJECT_ROOT, "artifacts/visualizations")
 # --------------------------------------------------------------
 # Training Hyperparameters
 # --------------------------------------------------------------
 BATCH_SIZE = 64
 LEARNING_RATE = 0.001
-EPOCHS = 100
+EPOCHS = 5
 PATIENCE = 5  # For early stopping
 L2_REGULARIZATION = 1e-5
 MOMENTUM = 0.9
@@ -109,7 +112,7 @@ LR_GAMMA = 0.7
 # Consider setting random seeds in your training script
 # Example: torch.manual_seed(SEED)
 # SEED = 42
-
+DEVICE = "cpu"
 # --------------------------------------------------------------
 # Hyperparameter Tuning (Optional)
 # --------------------------------------------------------------

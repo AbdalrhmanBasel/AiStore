@@ -1,10 +1,13 @@
 import os
 import sys
+import torch
 
 from logger import get_module_logger
 
 from srcs._0_preprocessing.preprocessor import preprocessor
 from srcs._2_training.trainer import trainer
+from srcs._2_training.node_embeddings import saving_node_embeddings
+from srcs._4_recommending.Recommender import recommender
 # =======================
 # 📁 Project Setup
 # =======================
@@ -21,27 +24,25 @@ logger = get_module_logger("run")
 def run():
     logger.info("🔄 Running program started.")
 
-    # # 1) Preprocess
+    # # # 1) Preprocess
     # logger.info("➡️  Preprocessing data...")
     # preprocessor()
     # logger.info("✅ Preprocessing completed.")
 
     # # 2) Train
-    logger.info("➡️  Training model...")
-    trainer()
-    logger.info("✅ Training completed.")
+    # logger.info("➡️  Training model...")
+    # trainer()
+    # logger.info("✅ Training completed.")
 
-    # # 3️⃣ Step 3: Save Node Embeddings
+    # # # 3️⃣ Step 3: Save Node Embeddings
     # logger.info("➡️  Step 3: Saving node embeddings...")
-    # node_embeddings = model.get_embeddings(graph.x, graph.edge_index)  # Pass node features and edge index
-    # torch.save(node_embeddings, 'node_embeddings.pt')
+    # saving_node_embeddings()
     # logger.info("✅ Step 3 Completed: Node embeddings saved as 'node_embeddings.pt'.")
-
+    
     # # 4) Recommendation
-    # logger.info("➡️  Generating recommendations...")
-    # _, _, test_loader = create_data_loaders(graph)
-    # recommendations = recommender(model, test_loader, device="cpu", top_k=10)
-    # logger.info(f"✅ Recommendations completed.")
+    logger.info("➡️  Generating recommendations...")
+    top_recommendations = recommender(user_id=0, top_k=10)
+    logger.info(f"✅ Recommendations completed.")
 
     # # 5) Display
     # user_id = 0  # or any valid user index
