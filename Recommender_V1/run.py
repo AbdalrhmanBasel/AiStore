@@ -53,8 +53,7 @@ def run():
     )
 
     # 4) Plot & save loss curves
-    os.makedirs(os.path.dirname(IMAGES_DIR), exist_ok=True)
-    img_path = os.path.join(os.path.dirname(MODEL_SAVE_PATH), "training_curve.png")
+    img_path = os.path.join(os.path.dirname(IMAGES_DIR), "training_curve.png")
     GraphSAGEModel.plot_training_curves(train_losses, val_losses, save_path=img_path)
 
     # 5) Final test evaluation
