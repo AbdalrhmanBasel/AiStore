@@ -46,9 +46,10 @@ def _load_graph_tensors():
 
 def _load_edge_splits():
     """Load pre‐split positive edge indices for train/val/test."""
-    train_idx = torch.load(TRAIN_DATA_PATH)
-    val_idx   = torch.load(VAL_DATA_PATH)
-    test_idx  = torch.load(TEST_DATA_PATH)
+    # Updated file names based on the new alias convention
+    train_idx = torch.load(TRAIN_DATA_PATH)   # Corresponds to train_data.pt
+    val_idx   = torch.load(VAL_DATA_PATH)     # Corresponds to val_data.pt
+    test_idx  = torch.load(TEST_DATA_PATH)    # Corresponds to test_data.pt
     return train_idx, val_idx, test_idx
 
 
@@ -130,7 +131,7 @@ def trainer(device: str = "cpu"):
     metrics = evaluate(trained_model, test_loader, device=device)
     logger.info(f"✅ Test results — {metrics}")    
     
-    
+    # Save the final model
     logger.info(f"💾 Final model saved to {TRAINED_MODEL_PATH}/{MODEL_NAME}_model.pth")
     logger.info("🎯 Training pipeline completed.")
 

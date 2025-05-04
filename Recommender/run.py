@@ -24,25 +24,25 @@ logger = get_module_logger("run")
 def run():
     logger.info("🔄 Running program started.")
 
-    # # # 1) Preprocess
+    # # 1) Preprocess
     # logger.info("➡️  Preprocessing data...")
     # preprocessor()
     # logger.info("✅ Preprocessing completed.")
 
-    # # 2) Train
+    # # # 2) Train
     # logger.info("➡️  Training model...")
     # trainer()
     # logger.info("✅ Training completed.")
 
     # # # 3️⃣ Step 3: Save Node Embeddings
-    # logger.info("➡️  Step 3: Saving node embeddings...")
-    # saving_node_embeddings()
-    # logger.info("✅ Step 3 Completed: Node embeddings saved as 'node_embeddings.pt'.")
+    logger.info("➡️  Step 3: Saving node embeddings...")
+    saving_node_embeddings()
+    logger.info("✅ Step 3 Completed: Node embeddings saved as 'node_embeddings.pt'.")
     
-    # # 4) Recommendation
-    logger.info("➡️  Generating recommendations...")
-    top_recommendations = recommender(user_id=0, top_k=10)
-    logger.info(f"✅ Recommendations completed.")
+    # # # 4) Recommendation
+    # logger.info("➡️  Generating recommendations...")
+    # top_recommendations = recommender(user_id=0, top_k=10)
+    # logger.info(f"✅ Recommendations completed.")
 
     # # 5) Display
     # user_id = 0  # or any valid user index

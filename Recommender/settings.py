@@ -59,8 +59,8 @@ TEST_DATA_PATH = os.path.join(GRAPH_SPLIT_DIR, "test_data.pt")
 # --------------------------------------------------------------
 # Data Loading & Sampling
 # --------------------------------------------------------------
-SAMPLE_DATA_SIZE = 1000     # Number of samples to load from full dataset
-DATA_CHUNK_SIZE = 100       # Number of rows to read at a time
+SAMPLE_DATA_SIZE = 10000     # Number of samples to load from full dataset
+DATA_CHUNK_SIZE = 1000      # Number of rows to read at a time
 
 TRAIN_SPLIT = 0.8
 VAL_SPLIT = 0.1
@@ -90,7 +90,7 @@ VISUALIZATION_PATH = os.path.join(PROJECT_ROOT, "artifacts/visualizations")
 # --------------------------------------------------------------
 BATCH_SIZE = 64
 LEARNING_RATE = 0.001
-EPOCHS = 5
+EPOCHS = 100
 PATIENCE = 5  # For early stopping
 L2_REGULARIZATION = 1e-5
 MOMENTUM = 0.9

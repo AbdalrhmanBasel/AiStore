@@ -50,7 +50,7 @@ def save_graph(edges: torch.Tensor, node_features: torch.Tensor, labels: torch.T
     """
     os.makedirs(dir_path, exist_ok=True)
     torch.save(edges, os.path.join(dir_path, "edge_index.pt"))
-    torch.save(node_features, os.path.join(dir_path, "node_features.pt"))
+    torch.save(node_features, os.path.join(dir_path, "features.pt"))
     torch.save(labels, os.path.join(dir_path, "labels.pt"))
     logger.info(f"💾 Saved graph tensors to {dir_path}")
 
@@ -63,6 +63,16 @@ def save_graph_splits(splits: dict, dir_path: str) -> None:
     """
     os.makedirs(dir_path, exist_ok=True)
 
+    # Mapping the split names to the aliases used in the trainer
+    alias_map = {
+        "train_pos": "train_data.pt",
+        "val_pos":   "val_data.pt",
+        "test_pos":  "test_data.pt",
+        "train_neg": "train_neg.pt",
+        "val_neg":   "val_neg.pt",
+        "test_neg":  "test_neg.pt",
+    }
+
     for split_name, edge_list in splits.items():
         # Convert list of [u, v] pairs into a 2xN LongTensor
         if len(edge_list) == 0:
@@ -71,6 +81,10 @@ def save_graph_splits(splits: dict, dir_path: str) -> None:
             arr = torch.tensor(edge_list, dtype=torch.long)  # shape (N,2)
             tensor = arr.t().contiguous()                   # shape (2,N)
 
-        path = os.path.join(dir_path, f"{split_name}.pt")
+        # Get the alias for the split (if available)
+        filename = alias_map.get(split_name, f"{split_name}.pt")
+        path = os.path.join(dir_path, filename)
+
+        # Save the tensor
         torch.save(tensor, path)
         logger.info(f"💾 Saved {split_name} edges ({tensor.size(1)} samples) to {path}")

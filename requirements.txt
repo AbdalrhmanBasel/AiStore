@@ -23,6 +23,7 @@ networkx>=3.4.2,<4.0
 colorama
 numpy>=2.2.4,<3.0
 psutil>=7.0.0,<8.0
+seaborn
 
 # NLP
 nltk
