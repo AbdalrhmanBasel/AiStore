@@ -4,23 +4,24 @@ import time
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import matplotlib.pyplot as plt
 from torch_geometric.nn import SAGEConv
+from torch_geometric.transforms import RandomLinkSplit
+from torch_geometric.data import Data
 from sklearn.metrics import precision_score, recall_score, f1_score
+import matplotlib.pyplot as plt
+from srcs.utils.logger import get_module_logger
+from srcs.utils.settings import (
+    IN_CHANNELS, HIDDEN_CHANNELS, NUM_LAYERS, DROPOUT, DEVICE,
+    LEARNING_RATE, EPOCHS, TRAIN_GRAPH_PATH, VAL_GRAPH_PATH, TEST_GRAPH_PATH,
+    MODEL_SAVE_PATH, NUM_USERS
+)
 
 # Ensure project root in path
 PROJECT_ROOT = os.path.abspath(os.path.join(__file__, "../../"))
 if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
-from srcs.utils.settings import (
-    IN_CHANNELS, HIDDEN_CHANNELS, NUM_LAYERS, DROPOUT, NUM_USERS,
-    NUM_NEGATIVE_SAMPLES, DEVICE, BATCH_SIZE
-)
-from srcs.utils.logger import get_module_logger
-
 logger = get_module_logger("GraphSAGEModel")
-
 
 class GraphSAGEModel(nn.Module):
     """GraphSAGE-based GNN for link prediction on bipartite user–item graphs."""
@@ -36,14 +37,12 @@ class GraphSAGEModel(nn.Module):
         super().__init__()
         self.device = device
         self.dropout = dropout
-        self.num_layers = num_layers
 
         # Build GraphSAGE layers
         self.convs = nn.ModuleList()
         self.convs.append(SAGEConv(in_channels, hidden_channels))
         for _ in range(num_layers - 1):
             self.convs.append(SAGEConv(hidden_channels, hidden_channels))
-
         self.to(self.device)
 
     def forward(self, x, edge_index):
@@ -54,121 +53,76 @@ class GraphSAGEModel(nn.Module):
         return x
 
     def train_model(self, train_data, val_data, optimizer, epochs):
-        """
-        Train loop that logs training & validation loss each epoch,
-        and returns the loss histories.
-        """
         train_data, val_data = train_data.to(self.device), val_data.to(self.device)
+
         train_losses, val_losses = [], []
+        precisions, recalls, f1s = [], [], []
 
         logger.info(f"🚀 Starting training for {epochs} epochs on {self.device}")
-        logger.info(f"🔢 Total params: {sum(p.numel() for p in self.parameters())}")
-
         for epoch in range(1, epochs + 1):
             t0 = time.time()
+            self.train()
             optimizer.zero_grad()
 
-            # --- forward & train loss ---
+            # --- forward & compute training loss using split labels ---
             emb = self(train_data.x, train_data.edge_index)
-            neg_train = self._negative_sampling(train_data)
-            loss_train = self._link_pred_loss(emb, train_data.edge_label_index, neg_train)
+            edge_idx = train_data.edge_label_index
+            labels   = train_data.edge_label.float().to(self.device)
+            scores   = (emb[edge_idx[0]] * emb[edge_idx[1]]).sum(dim=1)
+            loss_train = F.binary_cross_entropy_with_logits(scores, labels)
             loss_train.backward()
             optimizer.step()
 
-            # --- validation ---
+            # --- validation: loss and metrics ---
             loss_val = self.evaluate_model(val_data)
+            prec, rec, f1 = self.evaluate_with_metrics(val_data)
 
-            # record
+            # record histories
             train_losses.append(loss_train.item())
             val_losses.append(loss_val)
+            precisions.append(prec)
+            recalls.append(rec)
+            f1s.append(f1)
 
-            # log
+            # --- logging ---
             dt = time.time() - t0
-            lr = optimizer.param_groups[0]['lr']
             msg = (
                 f"[Epoch {epoch}/{epochs}] "
-                f"Train: {loss_train:.4f} | Val: {loss_val:.4f} | "
-                f"Time: {dt:.2f}s | LR: {lr:.6f}"
+                f"Train Loss: {loss_train:.4f} | Val Loss: {loss_val:.4f} | "
+                f"Precision: {prec:.4f} | Recall: {rec:.4f} | F1: {f1:.4f} | Time: {dt:.2f}s"
             )
-            if torch.cuda.is_available():
-                mem = torch.cuda.max_memory_allocated(self.device) / 1024**2
-                msg += f" | GPU Mem: {mem:.1f}MB"
             logger.info(msg)
 
         logger.info("✅ Training complete")
         return train_losses, val_losses
 
     def evaluate_model(self, data):
-        """Compute link-prediction loss on `data` (no grad)."""
         self.eval()
         data = data.to(self.device)
         with torch.no_grad():
             emb = self(data.x, data.edge_index)
-            neg = self._negative_sampling(data)
-            loss = self._link_pred_loss(emb, data.edge_label_index, neg)
+            edge_idx = data.edge_label_index
+            labels   = data.edge_label.float().to(self.device)
+            scores   = (emb[edge_idx[0]] * emb[edge_idx[1]]).sum(dim=1)
+            loss     = F.binary_cross_entropy_with_logits(scores, labels)
         return loss.item()
 
     def evaluate_with_metrics(self, data):
-        """Compute precision/recall/F1 on positive vs negative edges."""
         self.eval()
         data = data.to(self.device)
         with torch.no_grad():
-            emb = self(data.x, data.edge_index)
-            neg = self._negative_sampling(data)
-
-            pos = (emb[data.edge_label_index[0]] * emb[data.edge_label_index[1]]).sum(1)
-            neg = (emb[neg[0]] * emb[neg[1]]).sum(1)
-            scores = torch.cat([pos, neg]).cpu()
-            preds = (scores > 0).long()
-            labels = torch.cat([
-                torch.ones_like(pos), torch.zeros_like(neg)
-            ]).long().cpu()
+            emb      = self(data.x, data.edge_index)
+            edge_idx = data.edge_label_index
+            labels   = data.edge_label.long().cpu()
+            scores   = (emb[edge_idx[0]] * emb[edge_idx[1]]).sum(dim=1)
+            probs    = torch.sigmoid(scores).cpu()
+            preds    = (probs > 0.5).long()
 
         prec = precision_score(labels, preds)
         rec  = recall_score(labels, preds)
         f1   = f1_score(labels, preds)
-        logger.info(f"📊 Metrics — P: {prec:.4f} | R: {rec:.4f} | F1: {f1:.4f}")
+        # logger.info(f"📊 Metrics — Precision: {prec:.4f}, Recall: {rec:.4f}, F1: {f1:.4f}")
         return prec, rec, f1
-
-    def get_user_item_embeddings(self, data):
-        """Return `(user_embs, item_embs)` slices from the full embedding matrix."""
-        self.eval()
-        data = data.to(self.device)
-        with torch.no_grad():
-            emb = self(data.x, data.edge_index)
-        return emb[:NUM_USERS], emb[NUM_USERS:]
-
-    def recommend_top_k(self, user_embs, item_embs, top_k=10, batch_size=BATCH_SIZE):
-        """Batch‐wise top‐K for all users, avoids OOM."""
-        idx_list, score_list = [], []
-        item_t = item_embs.t()
-        for i in range(0, user_embs.size(0), batch_size):
-            u = user_embs[i:i+batch_size]
-            sc = u @ item_t
-            s, idx = sc.topk(top_k, dim=1)
-            idx_list.append(idx)
-            score_list.append(s)
-        return torch.cat(idx_list), torch.cat(score_list)
-
-    def _negative_sampling(self, data):
-        e = data.edge_index
-        existing = set(zip(e[0].tolist(), e[1].tolist()))
-        neg = set()
-        N, M = data.num_nodes, NUM_NEGATIVE_SAMPLES
-        while len(neg) < M:
-            u = torch.randint(0, N, ()).item()
-            v = torch.randint(0, N, ()).item()
-            if (u, v) not in existing:
-                neg.add((u, v))
-        neg = torch.tensor(list(neg), dtype=torch.long).t().contiguous()
-        return neg.to(self.device)
-
-    def _link_pred_loss(self, emb, pos_idx, neg_idx):
-        pos = (emb[pos_idx[0]] * emb[pos_idx[1]]).sum(1)
-        neg = (emb[neg_idx[0]] * emb[neg_idx[1]]).sum(1)
-        scores = torch.cat([pos, neg])
-        labels = torch.cat([torch.ones_like(pos), torch.zeros_like(neg)]).to(self.device)
-        return F.binary_cross_entropy_with_logits(scores, labels)
 
     def save(self, path):
         os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -179,6 +133,15 @@ class GraphSAGEModel(nn.Module):
         self.load_state_dict(torch.load(path, map_location=self.device))
         self.eval()
         logger.info(f"📥 Model loaded from {path}")
+
+    def get_user_item_embeddings(self, data):
+        """Return `(user_embs, item_embs)` slices from the full embedding matrix."""
+        self.eval()
+        data = data.to(self.device)
+        with torch.no_grad():
+            emb = self(data.x, data.edge_index)
+        return emb[:NUM_USERS], emb[NUM_USERS:]
+
 
     @staticmethod
     def plot_training_curves(train_losses, val_losses, save_path="training_curve.png"):
@@ -195,3 +158,46 @@ class GraphSAGEModel(nn.Module):
         plt.savefig(save_path)
         logger.info(f"📈 Training curve saved to {save_path}")
         plt.show()
+
+def plot_training_metrics(train_losses, val_losses, precisions, recalls, f1s, save_path="training_metrics.png"):
+    """Plot and save training and validation curves for loss and metrics."""
+    
+    # Create a figure with subplots
+    fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+
+    # Plot Training and Validation Loss
+    axes[0, 0].plot(train_losses, label="Train Loss", color='blue')
+    axes[0, 0].plot(val_losses, label="Val Loss", color='red')
+    axes[0, 0].set_title("Training & Validation Loss")
+    axes[0, 0].set_xlabel("Epoch")
+    axes[0, 0].set_ylabel("Loss")
+    axes[0, 0].legend()
+
+    # Plot Precision
+    axes[0, 1].plot(precisions, label="Precision", color='green')
+    axes[0, 1].set_title("Precision over Epochs")
+    axes[0, 1].set_xlabel("Epoch")
+    axes[0, 1].set_ylabel("Precision")
+    axes[0, 1].legend()
+
+    # Plot Recall
+    axes[1, 0].plot(recalls, label="Recall", color='orange')
+    axes[1, 0].set_title("Recall over Epochs")
+    axes[1, 0].set_xlabel("Epoch")
+    axes[1, 0].set_ylabel("Recall")
+    axes[1, 0].legend()
+
+    # Plot F1 Score
+    axes[1, 1].plot(f1s, label="F1 Score", color='purple')
+    axes[1, 1].set_title("F1 Score over Epochs")
+    axes[1, 1].set_xlabel("Epoch")
+    axes[1, 1].set_ylabel("F1 Score")
+    axes[1, 1].legend()
+
+    # Adjust layout
+    plt.tight_layout()
+
+    # Save the plot
+    plt.savefig(save_path)
+    plt.show()
+    logger.info(f"📈 Training metrics saved to {save_path}")

@@ -58,7 +58,7 @@ CHECKPOINT_PATH = os.path.join(MODEL_DIR, 'checkpoints')
 # General training hyperparameters
 LEARNING_RATE = 0.001 
 BATCH_SIZE = 32  
-EPOCHS = 100
+EPOCHS = 18
 HIDDEN_CHANNELS = 64  
 NUM_LAYERS = 2
 DROPOUT= 0.5
