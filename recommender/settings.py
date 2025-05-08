@@ -48,9 +48,13 @@ SAMPLE_CLEANED_REVIEW_DATA_PATH = os.path.join(SAMPLE_DATA_DIR, "cleaned/cleaned
 TRAIN_DATA_PATH = os.path.join(PROCESSED_DATA_DIR, "graph/train_data.pt")
 VAL_DATA_PATH = os.path.join(PROCESSED_DATA_DIR, "graph/val_data.pt")
 TEST_DATA_PATH = os.path.join(PROCESSED_DATA_DIR, "graph/test_data.pt")
+FULL_GRAPH_SAVE_PATH = os.path.join(PROCESSED_DATA_DIR, "graph/full_graph.pt")
+
 
 SAMPLE_DATA_SIZE = 500
 DATA_CHUNK_SIZE = 100
+
+
 
 # --------------------------------------------------------------
 # Model Settings

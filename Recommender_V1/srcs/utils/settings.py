@@ -31,10 +31,20 @@ CLEANED_METADATA_PATH_CSV = os.path.join(CLEANED_DATA_DIR, 'cleaned_meta.csv')
 CLEANED_METADATA_PATH_PARQUET = os.path.join(CLEANED_DATA_DIR, 'cleaned_meta.parquet')
 
 # Path to the processed graph data
-FULL_GRAPH_PATH = os.path.join(PROCESSED_DATA_DIR, 'graph.pt')  
+FULL_GRAPH_PATH = os.path.join(PROCESSED_DATA_DIR, 'graph_splits/full_graph.pt')  
 TRAIN_GRAPH_PATH = os.path.join(PROCESSED_DATA_DIR, 'graph_splits/graph_train.pt')  
 VAL_GRAPH_PATH = os.path.join(PROCESSED_DATA_DIR, 'graph_splits/graph_val.pt')  
 TEST_GRAPH_PATH = os.path.join(PROCESSED_DATA_DIR, 'graph_splits/graph_test.pt')  
+
+PROCESSED_META_TABULAR_DATA = os.path.join(PROCESSED_DATA_DIR, 'tabular_data/tabular_meta_df.csv')  
+PROCESSED_REVIEWS_TABULAR_DATA = os.path.join(PROCESSED_DATA_DIR, 'tabular_data/tabular_reviews_df.csv')  
+
+BATCH_DIR =  os.path.join(PROCESSED_DATA_DIR, "graph_batches")
+BATCH_TRAIN_LOADERS_PATH =  os.path.join(BATCH_DIR, "train_batches.pt")
+BATCH_VAL_LOADERS_PATH =  os.path.join(BATCH_DIR, "val_batches.pt")
+BATCH_TEST_LOADERS_PATH =  os.path.join(BATCH_DIR, "test_batches.pt")
+
+
 
 # --------------------------------------------------------------
 # Model & Artifact Directories
@@ -46,9 +56,10 @@ MODEL_DIR = os.path.join(ARTIFACTS_DIR, 'models')
 LOGS_DIR = os.path.join(ARTIFACTS_DIR, 'logs')  
 IMAGES_DIR = os.path.join(ARTIFACTS_DIR, 'images')  
 
-MODEL_SAVE_PATH = os.path.join(MODEL_DIR, "graphsage_model.pt")
+GNN_MODEL_SAVE_PATH = os.path.join(MODEL_DIR, "graphsage_model.pth")
+PREDICTOR_MODEL_SAVE_PATH = os.path.join(MODEL_DIR, "predictor_model.pth")
 # Specific paths for model-related files
-EMBEDDING_PATH = os.path.join(MODEL_DIR, 'embeddings')
+EMBEDDINGS_PATH = os.path.join(MODEL_DIR, 'embeddings')
 CHECKPOINT_PATH = os.path.join(MODEL_DIR, 'checkpoints') 
 
 # --------------------------------------------------------------
@@ -58,7 +69,7 @@ CHECKPOINT_PATH = os.path.join(MODEL_DIR, 'checkpoints')
 # General training hyperparameters
 LEARNING_RATE = 0.001 
 BATCH_SIZE = 32  
-EPOCHS = 18
+EPOCHS = 25
 HIDDEN_CHANNELS = 64  
 NUM_LAYERS = 2
 DROPOUT= 0.5

@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from torch_geometric.nn import SAGEConv
 from torch_geometric.transforms import RandomLinkSplit
 from torch_geometric.data import Data
-from sklearn.metrics import precision_score, recall_score, f1_score
+from sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_score, roc_curve
 import matplotlib.pyplot as plt
 from srcs.utils.logger import get_module_logger
 from srcs.utils.settings import (
@@ -56,7 +56,7 @@ class GraphSAGEModel(nn.Module):
         train_data, val_data = train_data.to(self.device), val_data.to(self.device)
 
         train_losses, val_losses = [], []
-        precisions, recalls, f1s = [], [], []
+        precisions, recalls, f1s, aucs = [], [], [], []
 
         logger.info(f"🚀 Starting training for {epochs} epochs on {self.device}")
         for epoch in range(1, epochs + 1):
@@ -65,17 +65,21 @@ class GraphSAGEModel(nn.Module):
             optimizer.zero_grad()
 
             # --- forward & compute training loss using split labels ---
-            emb = self(train_data.x, train_data.edge_index)
-            edge_idx = train_data.edge_label_index
-            labels   = train_data.edge_label.float().to(self.device)
-            scores   = (emb[edge_idx[0]] * emb[edge_idx[1]]).sum(dim=1)
+            emb = self(train_data.x, train_data.edge_index)  # GNN forward pass
+            edge_idx = train_data.edge_label_index           # Includes positive + negative edges
+            labels   = train_data.edge_label.float().to(self.device)  # Binary labels (1 for positive, 0 for negative)
+            
+            # Calculate scores: dot product between node embeddings
+            scores = (emb[edge_idx[0]] * emb[edge_idx[1]]).sum(dim=1)
+            
+            # Binary Cross-Entropy Loss
             loss_train = F.binary_cross_entropy_with_logits(scores, labels)
             loss_train.backward()
             optimizer.step()
 
             # --- validation: loss and metrics ---
             loss_val = self.evaluate_model(val_data)
-            prec, rec, f1 = self.evaluate_with_metrics(val_data)
+            prec, rec, f1, auc = self.evaluate_with_metrics(val_data)
 
             # record histories
             train_losses.append(loss_train.item())
@@ -83,13 +87,15 @@ class GraphSAGEModel(nn.Module):
             precisions.append(prec)
             recalls.append(rec)
             f1s.append(f1)
+            aucs.append(auc)
 
             # --- logging ---
             dt = time.time() - t0
             msg = (
                 f"[Epoch {epoch}/{epochs}] "
                 f"Train Loss: {loss_train:.4f} | Val Loss: {loss_val:.4f} | "
-                f"Precision: {prec:.4f} | Recall: {rec:.4f} | F1: {f1:.4f} | Time: {dt:.2f}s"
+                f"Precision: {prec:.4f} | Recall: {rec:.4f} | F1: {f1:.4f} | "
+                f"AUC: {auc:.4f} | Time: {dt:.2f}s"
             )
             logger.info(msg)
 
@@ -102,27 +108,65 @@ class GraphSAGEModel(nn.Module):
         with torch.no_grad():
             emb = self(data.x, data.edge_index)
             edge_idx = data.edge_label_index
-            labels   = data.edge_label.float().to(self.device)
-            scores   = (emb[edge_idx[0]] * emb[edge_idx[1]]).sum(dim=1)
-            loss     = F.binary_cross_entropy_with_logits(scores, labels)
+            labels = data.edge_label.float().to(self.device)
+            scores = (emb[edge_idx[0]] * emb[edge_idx[1]]).sum(dim=1)
+            loss = F.binary_cross_entropy_with_logits(scores, labels)
         return loss.item()
 
     def evaluate_with_metrics(self, data):
+        self.eval()  # Set the model to evaluation mode
+        data = data.to(self.device)  # Move data to the device (GPU or CPU)
+
+
+
+        with torch.no_grad():
+            emb = self(data.x, data.edge_index)  # Get embeddings for the nodes
+            edge_idx = data.edge_label_index  # Get edge indices for evaluation
+            labels = data.edge_label.long().cpu()  # Ground truth labels
+            scores = (emb[edge_idx[0]] * emb[edge_idx[1]]).sum(dim=1)  # Compute similarity scores
+            probs = torch.sigmoid(scores).cpu()  # Apply sigmoid to get probabilities
+            preds = (probs > 0.5).long()  # Predict positive edges if probability > 0.5
+
+
+
+        # Calculate precision, recall, and F1 score
+        prec = precision_score(labels, preds)
+        rec = recall_score(labels, preds)
+        f1 = f1_score(labels, preds)
+
+        # Log the calculated precision, recall, and F1 score
+
+
+        # Calculate ROC AUC score
+        auc = roc_auc_score(labels, probs)
+        
+
+
+        return prec, rec, f1, auc
+
+    def plot_roc_curve(self, data, save_path="roc_curve.png"):
         self.eval()
         data = data.to(self.device)
         with torch.no_grad():
-            emb      = self(data.x, data.edge_index)
+            emb = self(data.x, data.edge_index)
             edge_idx = data.edge_label_index
-            labels   = data.edge_label.long().cpu()
-            scores   = (emb[edge_idx[0]] * emb[edge_idx[1]]).sum(dim=1)
-            probs    = torch.sigmoid(scores).cpu()
-            preds    = (probs > 0.5).long()
+            labels = data.edge_label.long().cpu()
+            scores = (emb[edge_idx[0]] * emb[edge_idx[1]]).sum(dim=1)
+            probs = torch.sigmoid(scores).cpu()
 
-        prec = precision_score(labels, preds)
-        rec  = recall_score(labels, preds)
-        f1   = f1_score(labels, preds)
-        # logger.info(f"📊 Metrics — Precision: {prec:.4f}, Recall: {rec:.4f}, F1: {f1:.4f}")
-        return prec, rec, f1
+        fpr, tpr, _ = roc_curve(labels, probs)
+        plt.figure(figsize=(8, 6))
+        plt.plot(fpr, tpr, color='blue', lw=2)
+        plt.plot([0, 1], [0, 1], color='gray', lw=2, linestyle='--')
+        plt.xlim([0.0, 1.0])
+        plt.ylim([0.0, 1.05])
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        plt.title('ROC Curve')
+        plt.tight_layout()
+        plt.savefig(save_path)
+        plt.show()
+        logger.info(f"📈 ROC curve saved to {save_path}")
 
     def save(self, path):
         os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -142,7 +186,6 @@ class GraphSAGEModel(nn.Module):
             emb = self(data.x, data.edge_index)
         return emb[:NUM_USERS], emb[NUM_USERS:]
 
-
     @staticmethod
     def plot_training_curves(train_losses, val_losses, save_path="training_curve.png"):
         """Interactive & saved plot of loss curves."""
@@ -159,7 +202,7 @@ class GraphSAGEModel(nn.Module):
         logger.info(f"📈 Training curve saved to {save_path}")
         plt.show()
 
-def plot_training_metrics(train_losses, val_losses, precisions, recalls, f1s, save_path="training_metrics.png"):
+def plot_training_metrics(train_losses, val_losses, precisions, recalls, f1s, aucs, save_path="training_metrics.png"):
     """Plot and save training and validation curves for loss and metrics."""
     
     # Create a figure with subplots
@@ -194,10 +237,8 @@ def plot_training_metrics(train_losses, val_losses, precisions, recalls, f1s, sa
     axes[1, 1].set_ylabel("F1 Score")
     axes[1, 1].legend()
 
-    # Adjust layout
+    # Adjust the layout
     plt.tight_layout()
-
-    # Save the plot
     plt.savefig(save_path)
-    plt.show()
     logger.info(f"📈 Training metrics saved to {save_path}")
+    plt.show()

@@ -58,7 +58,8 @@ def run():
 
     # 5) Final test evaluation
     logger.info("➡️ Final evaluation on test set")
-    test_loss = model.evaluate_model(graph_test)
+    # test_loss = model.evaluate_model(graph_test)
+    test_loss = model.evaluate_with_metrics(graph_test)
     logger.info(f"✅ Test Loss: {test_loss:.4f}")
 
     # 6) Save trained model

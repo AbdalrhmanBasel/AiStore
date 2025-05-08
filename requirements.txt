@@ -16,6 +16,8 @@ scikit-learn>=1.6.1,<2.0
 pandas>=2.2.3,<3.0
 tensorboard
 torchmetrics
+xgboost
+lightgbm
 
 # Utils
 matplotlib>=3.10.1,<4.0
