@@ -23,7 +23,9 @@ from django.conf.urls.static import static
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include('store.urls')),
-    path('', include('recommender.urls'))
+
+    # apis
+    path('api/recommender/', include('recommender.urls')),
 ]
 
 # Serve media files only in development

@@ -2,8 +2,12 @@
 Django>=5.0,<6.0
 psycopg2>=2.9.10,<3.0
 djangorestframework==3.16.0
+dj-database-url
 Pillow>=11.1.0,<12.0
 python-dotenv
+django-cors-headers
+drf-spectacular
+django-redis
 
 # Core ML
 torch>=2.6.0,<3.0

@@ -32,9 +32,9 @@ ENCODER_BRAND = os.path.join(ARTIFACTS_DIR, 'encoders/brand_encoder.pkl')
 ENCODER_COLOR = os.path.join(ARTIFACTS_DIR, 'encoders/color_encoder.pkl')
 ENCODER_SCALER = os.path.join(ARTIFACTS_DIR, 'scalers/feature_scaler.pkl')
 
-MAPPING_USER = os.path.join(ARTIFACTS_DIR, 'mappings/user_id_map.json')
-MAPPING_ITEM = os.path.join(ARTIFACTS_DIR, 'mappings/item_to_id_mapping.json')
-REVERSED_MAPPING_ITEM = os.path.join(ARTIFACTS_DIR, 'mappings/id_to_item_mapping.json')
+MAPPING_USER_T0_ID_PATH = os.path.join(ARTIFACTS_DIR, 'mappings/user_to_id_mapping.json')
+MAPPING_ITEM_ASIN_TO_ID_PATH = os.path.join(ARTIFACTS_DIR, 'mappings/item_asin_to_id_mapping.json')
+MAPPIN_ID_TO_ASIN_ITEM_PATH = os.path.join(ARTIFACTS_DIR, 'mappings/id_to_item_asin_mapping.json')
 
 ITEM_FEATURE_PREPROCESSOR = os.path.join(ARTIFACTS_DIR, 'preprocessor/item_feature_preprocessor.pkl')
 # --------------------------------------------------------------

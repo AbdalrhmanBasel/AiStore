@@ -1,36 +1,45 @@
-from django.http import JsonResponse
-from django.apps import apps
-import numpy as np
+# recommender/views.py
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.utils import timezone
+from django.core.cache import cache
+from .utils.recommend import get_recommendations
 
-def recommend(request, user_id):
-    # Get loaded models and data
-    app_config = apps.get_app_config('recommender')
-    gnn = app_config.gnn
-    predictor = app_config.predictor
-    data = app_config.data
+class RecommendationsView(APIView):
+    def post(self, request):
+        user_id = request.data.get("user_id")
+        k = int(request.data.get("k", 5))
 
-    try:
-        # Get embeddings
-        emb = gnn(data.x_dict, data.edge_index_dict)
-        user_emb = emb['user'][user_id].unsqueeze(0)
-        item_embs = emb['item']
+        if not user_id:
+            return Response(
+                {"detail": "user_id is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        # Predict scores
-        scores = predictor(user_emb.expand(item_embs.size(0), -1), item_embs).cpu().numpy()
+        try:
+            # Try getting from cache first
+            cached = cache.get(f"recommendations_{user_id}")
+            if cached:
+                return Response(cached)
 
-        # Exclude interacted items
-        interacted = data['user', 'rates', 'item'].edge_index[1][
-            data['user', 'rates', 'item'].edge_index[0] == user_id
-        ].cpu().numpy()
+            # Get recommendations
+            recommended = get_recommendations(user_id=user_id, k=k)
+            valid_recommended = [a for a in recommended if a]
 
-        scores[interacted] = -np.inf
-        top_k = np.argpartition(scores, -5)[-5:]
-        top_k = top_k[np.argsort(-scores[top_k])]
+            # Cache results for 1 hour
+            cache.set(f"recommendations_{user_id}", {
+                "user_id": user_id,
+                "recommendations": valid_recommended,
+                "timestamp": timezone.now().isoformat()
+            }, timeout=3600)
 
-        return JsonResponse({
-            "user_id": int(user_id),
-            "recommendations": top_k.tolist()
-        })
-
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+            return Response({
+                "user_id": user_id,
+                "recommendations": valid_recommended,
+                "count": len(valid_recommended)
+            })
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

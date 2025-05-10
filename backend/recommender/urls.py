@@ -1,6 +1,6 @@
 from django.urls import path
-from . import views
+from .views import RecommendationsView
 
 urlpatterns = [
-    path('api/recommendations/<int:user_id>/', views.recommend, name='recommend'),
+    path('api/recommendations/', RecommendationsView.as_view(), name='recommendations'),
 ]
