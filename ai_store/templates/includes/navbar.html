@@ -1,0 +1,130 @@
+{% load static %}
+<!-- Header Section -->
+<header class="section-header">
+    <!-- Navigation Bar -->
+    <nav class="navbar p-md-0 navbar-expand-sm navbar-light border-bottom">
+        <div class="container">
+            <!-- Mobile Toggler -->
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarTop4"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Navbar Collapse -->
+            <div class="collapse navbar-collapse" id="navbarTop4">
+                <!-- Left Side Nav -->
+                <ul class="navbar-nav mr-auto">
+                    <!-- Language Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Язык
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="languageDropdown">
+                            <a class="dropdown-item" href="#">Русский</a>
+                            <a class="dropdown-item" href="#">Английский</a>
+                            <a class="dropdown-item" href="#">Арабский</a>
+                        </div>
+                    </li>
+
+                    <!-- Currency Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="currencyDropdown" role="button"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Валюта
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="currencyDropdown">
+                            <a class="dropdown-item" href="#">RUBL</a>
+                            <a class="dropdown-item" href="#">USD</a>
+                            <a class="dropdown-item" href="#">AED</a>
+                        </div>
+                    </li>
+                </ul>
+
+                <!-- Right Side Nav -->
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="fa fa-envelope"></i> Email
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="fa fa-phone"></i> Свяжитесь с нами
+                        </a>
+                    </li>
+                </ul>
+            </div> <!-- /.navbar-collapse -->
+        </div> <!-- /.container -->
+    </nav>
+
+    <!-- Header Main -->
+    <section class="header-main border-bottom">
+        <div class="container">
+            <div class="row align-items-center">
+                <!-- Logo -->
+                <div class="col-lg-2 col-md-3 col-6">
+                    <a href="./" class="brand-wrap">
+                        <img class="logo" src="{% static 'images/logo.png' %}" alt="Logo">
+                    </a>
+                </div>
+
+                <!-- Category Dropdown -->
+                <div class="col-lg col-sm col-md col-6 flex-grow-0">
+                    <div class="category-wrap dropdown d-inline-block float-right">
+                        <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown"> 
+                            <i class="fa fa-bars"></i> Все категории 
+                        </button>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="#">Механические детали / инструменты</a>
+                            <a class="dropdown-item" href="#">Электроника / бытовая техника</a>
+                            <a class="dropdown-item" href="#">Автотранспорт</a>
+                            <a class="dropdown-item" href="#">Одежда / текстиль / часы</a>
+                            <a class="dropdown-item" href="#">Дом и сад / строительство / освещение</a>
+                            <a class="dropdown-item" href="#">Красота / здоровье / личная гигиена</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Store Button -->
+                <a href="./store.html" class="btn btn-outline-primary">Магазин</a>
+
+                <!-- Search Bar -->
+                <div class="col-lg col-md-6 col-sm-12 col">
+                    <form action="#" class="search">
+                        <div class="input-group w-100">
+                            <input type="text" class="form-control" style="width:60%;" placeholder="Поиск">
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fa fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- User Actions -->
+                <div class="col-lg-3 col-sm-6 col-8 order-2 order-lg-3">
+                    <div class="d-flex justify-content-end mb-3 mb-lg-0">
+                        <!-- Sign In / Register -->
+                        <div class="widget-header">
+                            <small class="title text-muted">Гость!</small>
+                            <div>
+                                <a href="./signin.html">Войти</a> <span class="dark-transp"> | </span>
+                                <a href="./register.html"> Регистрация</a>
+                            </div>
+                        </div>
+
+                        <!-- Shopping Cart -->
+                        <a href="./cart.html" class="widget-header pl-3 ml-3">
+                            <div class="icon icon-sm rounded-circle border">
+                                <i class="fa fa-shopping-cart"></i>
+                            </div>
+                            <span class="badge badge-pill badge-danger notify">0</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</header>
