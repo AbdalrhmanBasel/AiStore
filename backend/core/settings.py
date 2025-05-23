@@ -17,8 +17,12 @@ load_dotenv(dotenv_path=BASE_DIR / '.env')
 # ====================
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "unsafe-secret-key")
-DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
-ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",") if not DEBUG else ["*"]
+# DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
+# ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",") if not DEBUG else ["*"]
+
+DEBUG = True
+ALLOWED_HOSTS = ["*"]
+
 
 # ====================
 # Installed Applications
@@ -138,16 +142,11 @@ MEDIA_ROOT = BASE_DIR / "media"
 # Security Settings
 # ====================
 
-if not DEBUG:
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = 31536000
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-    CORS_ALLOWED_ORIGINS = [os.getenv("FRONTEND_URL")]
-else:
-    CORS_ALLOW_ALL_ORIGINS = True
+# Security settings
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_HSTS_SECONDS = 31536000
 
 # ====================
 # Email Settings

@@ -8,6 +8,7 @@ python-dotenv
 django-cors-headers
 drf-spectacular
 django-redis
+gunicorn
 
 # Core ML
 torch>=2.6.0,<3.0

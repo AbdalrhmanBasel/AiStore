@@ -21,11 +21,10 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("", include('store.urls')),
-
-    # apis
-    path('api/recommender/', include('recommender.urls')),
+    path('admin/', admin.site.urls),
+    path('api/', include('store.urls')),
+    path('api/auth/', include('authentication.urls')),
+    path('api/recommender/', include('recommender.urls')),  
 ]
 
 # Serve media files only in development
