@@ -52,8 +52,11 @@ class Category(models.Model):
         return self.category_name
 
     def get_absolute_url(self):
-        """Return URL to category detail page"""
-        return reverse('category_detail', kwargs={'slug': self.slug})
+        """Return URL for the category's products list page."""
+        return reverse('products_by_category', kwargs={'category_slug': self.slug})
+
+    def get_url(self):
+        return self.get_absolute_url()
 
     def clean(self):
         """Ensure slug uniqueness and auto-generation"""
@@ -64,8 +67,7 @@ class Category(models.Model):
             raise ValidationError({'slug': _('A category with this slug already exists.')})
 
     def save(self, *args, **kwargs):
-        """Auto-generate slug and validate"""
-        self.full_clean()
+        """Auto-generate slug and validate before saving"""
         if not self.slug:
             base_slug = slugify(self.category_name)
             slug = base_slug
@@ -74,4 +76,6 @@ class Category(models.Model):
                 count += 1
                 slug = f"{base_slug}-{count}"
             self.slug = slug
+        
+        self.full_clean()  # run validations including unique slug check
         super().save(*args, **kwargs)

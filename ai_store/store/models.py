@@ -3,6 +3,8 @@ from categories.models import Category
 from django.utils.text import slugify
 from django.urls import reverse
 from django.core.exceptions import ValidationError
+from django.urls import reverse
+
 
 class Product(models.Model):
     # Basic Info
@@ -72,11 +74,18 @@ class Product(models.Model):
         verbose_name = 'Product'
         verbose_name_plural = 'Products'
 
+   
+
     def __str__(self):
         return self.product_name
-
+    
     def get_absolute_url(self):
-        return reverse('product_detail', kwargs={'slug': self.slug})
+        return reverse('product_detail', kwargs={
+            'category_slug': self.category.slug,
+            'product_slug': self.slug
+        })
+
+
 
     def clean(self):
         """Ensure slug uniqueness and auto-generation"""

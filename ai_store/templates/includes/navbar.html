@@ -64,7 +64,7 @@
             <div class="row align-items-center">
                 <!-- Logo -->
                 <div class="col-lg-2 col-md-3 col-6">
-                    <a href="./" class="brand-wrap">
+                    <a href="{% url 'home' %}" class="brand-wrap">
                         <img class="logo" src="{% static 'images/logo.png' %}" alt="Logo">
                     </a>
                 </div>
@@ -76,18 +76,17 @@
                             <i class="fa fa-bars"></i> Все категории 
                         </button>
                         <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#">Механические детали / инструменты</a>
-                            <a class="dropdown-item" href="#">Электроника / бытовая техника</a>
-                            <a class="dropdown-item" href="#">Автотранспорт</a>
-                            <a class="dropdown-item" href="#">Одежда / текстиль / часы</a>
-                            <a class="dropdown-item" href="#">Дом и сад / строительство / освещение</a>
-                            <a class="dropdown-item" href="#">Красота / здоровье / личная гигиена</a>
+                            <a class="dropdown-item" href="{% url 'store' %}">Все</a>
+                            {% for category in links %}
+                            
+                                <a class="dropdown-item" href="{{ category.get_url }}">{{ category.category_name }}</a>
+                            {% endfor %}
                         </div>
                     </div>
                 </div>
 
                 <!-- Store Button -->
-                <a href="./store.html" class="btn btn-outline-primary">Магазин</a>
+                <a href="{% url 'store' %}" class="btn btn-outline-primary">Магазин</a>
 
                 <!-- Search Bar -->
                 <div class="col-lg col-md-6 col-sm-12 col">
