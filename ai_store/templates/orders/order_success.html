@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="section-content padding-y bg">
+  <div class="container text-center">
+    <h2>Спасибо за ваш заказ!</h2>
+    <p>Мы отправим вам подтверждение по электронной почте.</p>
+    <a href="{% url 'store' %}" class="btn btn-primary">Вернуться в магазин</a>
+  </div>
+</section>
+{% endblock %}

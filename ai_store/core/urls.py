@@ -9,7 +9,12 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("", home, name="home"),
     path("product/<slug:slug>/", product_detail, name="product_detail"),
-    path("store/", include("store.urls"))
+    path("store/", include("store.urls")),
+    path('cart/', include('cart.urls')),
+    path("accounts/", include("accounts.urls")),
+    path('orders/', include('orders.urls')),  
+    path('', include('dashboard.urls')),
+    path('wishlist/', include('wishlist.urls')),
 ]
 
 # Serve media files in development (remove in production)

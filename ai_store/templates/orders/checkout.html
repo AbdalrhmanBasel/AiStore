@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block content %}
+<section class="section-content padding-y bg">
+  <div class="container">
+    <div class="row">
+      <!-- Billing Address Form -->
+      <aside class="col-lg-6">
+        <div class="card">
+          <div class="card-body">
+            <h4 class="card-title mb-4">Адрес для выставления счета</h4>
+            <form method="post" action="">
+              {% csrf_token %}
+
+              {{ billing_form.non_field_errors }}
+
+              <!-- Billing fields -->
+              <div class="mb-3">
+                <label for="{{ billing_form.first_name.id_for_label }}">Имя</label>
+                {{ billing_form.first_name|add_class:"form-control" }}
+                {% if billing_form.first_name.errors %}
+                  <div class="invalid-feedback d-block">{{ billing_form.first_name.errors|striptags }}</div>
+                {% endif %}
+              </div>
+
+              <div class="mb-3">
+                <label for="{{ billing_form.last_name.id_for_label }}">Фамилия</label>
+                {{ billing_form.last_name|add_class:"form-control" }}
+                {% if billing_form.last_name.errors %}
+                  <div class="invalid-feedback d-block">{{ billing_form.last_name.errors|striptags }}</div>
+                {% endif %}
+              </div>
+
+              <div class="mb-3">
+                <label for="{{ billing_form.email.id_for_label }}">Email</label>
+                {{ billing_form.email|add_class:"form-control" }}
+                {% if billing_form.email.errors %}
+                  <div class="invalid-feedback d-block">{{ billing_form.email.errors|striptags }}</div>
+                {% endif %}
+              </div>
+
+              <div class="mb-3">
+                <label for="{{ billing_form.phone_number.id_for_label }}">Телефон</label>
+                {{ billing_form.phone_number|add_class:"form-control" }}
+                {% if billing_form.phone_number.errors %}
+                  <div class="invalid-feedback d-block">{{ billing_form.phone_number.errors|striptags }}</div>
+                {% endif %}
+              </div>
+
+              <div class="mb-3">
+                <label for="{{ billing_form.address_line1.id_for_label }}">Адрес (строка 1)</label>
+                {{ billing_form.address_line1|add_class:"form-control" }}
+                {% if billing_form.address_line1.errors %}
+                  <div class="invalid-feedback d-block">{{ billing_form.address_line1.errors|striptags }}</div>
+                {% endif %}
+              </div>
+
+              <div class="mb-3">
+                <label for="{{ billing_form.address_line2.id_for_label }}">Адрес (строка 2)</label>
+                {{ billing_form.address_line2|add_class:"form-control" }}
+                {% if billing_form.address_line2.errors %}
+                  <div class="invalid-feedback d-block">{{ billing_form.address_line2.errors|striptags }}</div>
+                {% endif %}
+              </div>
+
+              <div class="mb-3">
+                <label for="{{ billing_form.city.id_for_label }}">Город</label>
+                {{ billing_form.city|add_class:"form-control" }}
+                {% if billing_form.city.errors %}
+                  <div class="invalid-feedback d-block">{{ billing_form.city.errors|striptags }}</div>
+                {% endif %}
+              </div>
+
+              <div class="mb-3">
+                <label for="{{ billing_form.postal_code.id_for_label }}">Почтовый индекс</label>
+                {{ billing_form.postal_code|add_class:"form-control" }}
+                {% if billing_form.postal_code.errors %}
+                  <div class="invalid-feedback d-block">{{ billing_form.postal_code.errors|striptags }}</div>
+                {% endif %}
+              </div>
+
+              <div class="mb-3">
+                <label for="{{ billing_form.country.id_for_label }}">Страна</label>
+                {{ billing_form.country|add_class:"form-control" }}
+                {% if billing_form.country.errors %}
+                  <div class="invalid-feedback d-block">{{ billing_form.country.errors|striptags }}</div>
+                {% endif %}
+              </div>
+
+              <!-- 🚀 Payment Method  -->
+              <div class="mb-4">
+                <h5>Способ оплаты</h5>
+
+                <!-- SBP -->
+                <div class="form-check mb-2">
+                  <input type="radio" name="payment_method" value="sbp" checked class="form-check-input" id="sbpOption">
+                  <label class="form-check-label" for="sbpOption">
+                    СБП (Система быстрых платежей)
+                  </label>
+                </div>
+
+                <!-- SberPay -->
+                <div class="form-check">
+                  <input type="radio" name="payment_method" value="sberpay" class="form-check-input" id="sberpayOption">
+                  <label class="form-check-label" for="sberpayOption">
+                    СберПей (SberPay)
+                  </label>
+                </div>
+              </div>
+
+
+
+              <button type="submit" class="btn btn-primary btn-block">Оформить заказ</button>
+            </form>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Cart Summary -->
+      <aside class="col-lg-6">
+        <div class="card">
+          <div class="card-body">
+            <h4 class="card-title mb-4">Ваша корзина</h4>
+            <table class="table table-borderless table-shopping-cart">
+              <thead class="text-muted">
+                <tr class="small text-uppercase">
+                  <th scope="col">Товар</th>
+                  <th scope="col" style="width:120px;">Количество</th>
+                  <th scope="col" style="width:120px;">Цена</th>
+                  <th scope="col" class="text-right" style="width:200px;"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in cart_items %}
+                <tr>
+                  <td>
+                    <figure class="itemside align-items-center">
+                      <div class="aside">
+                        <img src="{{ item.product.images.url }}" class="img-sm" alt="{{ item.product.product_name }}">
+                      </div>
+                      <figcaption class="info">
+                        <a href="{% url 'product_detail' item.product.category.slug item.product.slug %}" class="title text-dark">{{ item.product.product_name }}</a>
+                        <p class="text-muted small">{{ item.product.description|truncatewords:15 }}</p>
+                      </figcaption>
+                    </figure>
+                  </td>
+                  <td>{{ item.quantity }}</td>
+                  <td>${{ item.subtotal|floatformat:2 }}</td>
+                  <td class="text-right">
+                    <a href="{% url 'remove_from_cart' item.id %}" class="btn btn-danger btn-sm">Удалить</a>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="4" class="text-center text-muted">Ваша корзина пуста.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+
+            <dl class="dlist-align">
+              <dt>Промежуточный итог:</dt>
+              <dd class="text-right">${{ cart_total_price|floatformat:2 }}</dd>
+            </dl>
+            <dl class="dlist-align">
+              <dt>Налог:</dt>
+              <dd class="text-right">${{ cart_tax|floatformat:2 }}</dd>
+            </dl>
+            <dl class="dlist-align">
+              <dt>Итого:</dt>
+              <dd class="text-right text-dark b"><strong>${{ cart_final_total|floatformat:2 }}</strong></dd>
+            </dl>
+
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+{% endblock %}

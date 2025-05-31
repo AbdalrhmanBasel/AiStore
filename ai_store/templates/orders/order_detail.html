@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="section-content padding-y bg">
+  <div class="container">
+    <h2>Заказ №{{ order.id }}</h2>
+    <p>Статус: {{ order.status }}</p>
+    <p>Итого: ${{ order.total_price|floatformat:2 }}</p>
+    <p>Дата: {{ order.created_at }}</p>
+
+    <h4>Товары</h4>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Товар</th>
+          <th>Количество</th>
+          <th>Цена</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in order.items.all %}
+        <tr>
+          <td>{{ item.product.product_name }}</td>
+          <td>{{ item.quantity }}</td>
+          <td>${{ item.price|floatformat:2 }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <a href="{% url 'order_history' %}" class="btn btn-secondary">Вернуться к заказам</a>
+  </div>
+</section>
+{% endblock %}

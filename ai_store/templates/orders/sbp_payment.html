@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="section-content padding-y bg">
+  <div class="container text-center">
+
+    <h2 class="mb-4">Оплата через СБП (Система Быстрых Платежей)</h2>
+
+    <p>Номер заказа: <strong>#{{ order.id }}</strong></p>
+    <p>Сумма к оплате: <strong>${{ order.total_price|floatformat:2 }}</strong></p>
+
+    <p class="text-muted mb-4">Сканируйте QR-код или следуйте инструкциям банка для завершения оплаты.</p>
+
+    <!-- Example QR placeholder -->
+    <img src="{% static 'images/payment/qr_placeholder.png' %}" alt="QR для СБП" class="img-fluid" style="max-width: 300px;">
+
+    <div class="mt-4">
+      <a href="{% url 'order_history' %}" class="btn btn-secondary">Мои заказы</a>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

@@ -39,11 +39,19 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
+    # 3rd Parties
+    'widget_tweaks',
+
     # Custom
     "categories",
     "accounts",
     "store",
-    
+    "cart",
+    "orders",
+    "dashboard",
+    'wishlist',
+    'recommender',
+ 
 ]
 
 MIDDLEWARE = [
@@ -69,6 +77,8 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "categories.context_processors.menu_links",
+                'cart.context_processors.cart_item_count',
+                'wishlist.context_processors.wishlist_count'
             ],
         },
     },
@@ -141,3 +151,14 @@ MEDIA_ROOT = BASE_DIR / "media"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# Custom - Integrating Django Messages
+from django.contrib.messages import constants as messages
+
+MESSAGE_TAGS = {
+    messages.ERROR:'danger',
+}
+
+
+LOGIN_URL = 'login'

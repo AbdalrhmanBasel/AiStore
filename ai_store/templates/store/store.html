@@ -48,19 +48,19 @@
                         <div class="filter-content collapse show" id="collapse_4">
                             <div class="card-body">
                                 <label class="checkbox-btn">
-                                    <input type="checkbox">
+                                    <input type="checkbox" />
                                     <span class="btn btn-light">XS</span>
                                 </label>
                                 <label class="checkbox-btn">
-                                    <input type="checkbox">
+                                    <input type="checkbox" />
                                     <span class="btn btn-light">SM</span>
                                 </label>
                                 <label class="checkbox-btn">
-                                    <input type="checkbox">
+                                    <input type="checkbox" />
                                     <span class="btn btn-light">LG</span>
                                 </label>
                                 <label class="checkbox-btn">
-                                    <input type="checkbox">
+                                    <input type="checkbox" />
                                     <span class="btn btn-light">XXL</span>
                                 </label>
                             </div>
@@ -79,8 +79,8 @@
                             <div class="card-body">
                                 <div class="form-row">
                                     <div class="form-group col-md-6">
-                                        <label>Мин</label>
-                                        <select class="form-control">
+                                        <label for="minPrice">Мин</label>
+                                        <select class="form-control" id="minPrice" name="min_price">
                                             <option value="0">$0</option>
                                             <option value="50">$50</option>
                                             <option value="100">$100</option>
@@ -90,8 +90,8 @@
                                         </select>
                                     </div>
                                     <div class="form-group col-md-6">
-                                        <label>Макс</label>
-                                        <select class="form-control">
+                                        <label for="maxPrice">Макс</label>
+                                        <select class="form-control" id="maxPrice" name="max_price">
                                             <option value="50">$50</option>
                                             <option value="100">$100</option>
                                             <option value="200">$200</option>
@@ -101,7 +101,7 @@
                                         </select>
                                     </div>
                                 </div>
-                                <button class="btn btn-block btn-primary">Применить</button>
+                                <button type="submit" class="btn btn-block btn-primary">Применить</button>
                             </div>
                         </div>
                     </article>
@@ -112,65 +112,97 @@
             <main class="col-md-9">
                 <header class="border-bottom mb-4 pb-3">
                     <div class="form-inline">
-                        <span class="mr-md-auto"><b>{{ products_count }} Товары найдено</b></span>
+                        <span class="mr-md-auto"><b>{{ products_count }} Товар{{ products_count|pluralize:"ов,а," }}</b></span>
                     </div>
                 </header>
 
                 <div class="row">
-                    {% for product in products %}
-                    <div class="col-md-4">
-                        <figure class="card card-product-grid">
-                            <div class="img-wrap">
-                                <a href="{{ product.get_absolute_url }}" class="d-block position-relative overflow-hidden" style="height: 250px;" aria-label="Перейти к товару {{ product.product_name }}">
-                                    {% if product.images %}
-                                        <img src="{{ product.images.url }}" alt="{{ product.product_name }}" class="img-fluid w-100 h-100" style="object-fit: cover; transition: transform 0.3s ease;">
-                                    {% else %}
-                                        <img src="{% static 'images/items/default.jpg' %}" alt="Нет изображения" class="img-fluid w-100 h-100" style="object-fit: cover;">
-                                    {% endif %}
-                                </a>
-                            </div>
-                            <figcaption class="info-wrap">
-                                <div class="fix-height">
-                                    <a href="{{ product.get_absolute_url }}" class="title">{{ product.product_name }}</a>
-                                    <div class="price-wrap mt-2">
-                                        <span class="price">${{ product.price }}</span>
-                                        {% if product.discount %}
-                                        <del class="price-old">${{ product.original_price }}</del>
-                                        {% endif %}
+                    {% if products %}
+                        {% for product in products %}
+                            <div class="col-md-4">
+                                <figure class="card card-product-grid">
+                                    <div class="img-wrap">
+                                        <a href="{{ product.get_absolute_url }}" class="d-block position-relative overflow-hidden" style="height: 250px;" aria-label="Перейти к товару {{ product.product_name }}">
+                                            {% if product.images %}
+                                                <img src="{{ product.images.url }}" alt="{{ product.product_name }}" class="img-fluid w-100 h-100" style="object-fit: cover; transition: transform 0.3s ease;" />
+                                            {% else %}
+                                                <img src="{% static 'images/items/default.jpg' %}" alt="Нет изображения" class="img-fluid w-100 h-100" style="object-fit: cover;" />
+                                            {% endif %}
+                                        </a>
                                     </div>
-                                </div>
-                                
-                                <!-- Out of Stock Condition -->
-                                {% if product.stock <= 0 %}
-                                    <h5 class="text-danger">Распродано</h5>
-                                {% else %}
-                                    <a href="#" class="btn btn-block btn-primary">
-                                      <span class="text">Добавить в корзину</span> 
-                                      <i class="fas fa-shopping-cart"></i>
+                                    <figcaption class="info-wrap">
+                                        <div class="fix-height">
+                                            <a href="{{ product.get_absolute_url }}" class="title">{{ product.product_name }}</a>
+                                            <div class="price-wrap mt-2">
+                                                <span class="price">${{ product.price }}</span>
+                                                {% if product.discount %}
+                                                    <del class="price-old">${{ product.original_price }}</del>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+
+                                    {% if product.stock <= 0 %}
+                                        <h5 class="text-danger">Распродано</h5>
+                                    {% else %}
+                                        <a href="{% url 'add_cart' product.id %}" class="btn btn-primary w-100 mb-2" aria-label="Добавить {{ product.product_name }} в корзину">
+                                            <i class="fa fa-shopping-cart me-2"></i> В корзину
+                                        </a>
+                                    {% endif %}
+                                    
+                                    <!-- Wishlist Button (always show) -->
+                                    <a href="{% url 'add_to_wishlist' product.id %}" class="btn btn-outline-secondary w-100" aria-label="Добавить {{ product.product_name }} в список желаемого">
+                                        <i class="fa fa-heart me-2"></i> В список желаемого
                                     </a>
-                                {% endif %}
-                            </figcaption>
-                        </figure>
-                    </div>
-                    {% endfor %}
+                                    
+                                    </figcaption>
+                                </figure>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p>Товары не найдены.</p>
+                    {% endif %}
                 </div> <!-- row end -->
 
                 <!-- Pagination -->
-                <nav class="mt-4" aria-label="Page navigation">
-                    <ul class="pagination">
-                        <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
-                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}" tabindex="-1">Предыдущая</a>
-                        </li>
-                        {% for num in page_obj.paginator.page_range %}
-                            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
-                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-                            </li>
-                        {% endfor %}
-                        <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
-                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Следующая</a>
-                        </li>
-                    </ul>
-                </nav>
+                {% if page_obj.has_other_pages %}
+                    <nav class="mt-4" aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}" tabindex="-1">Предыдущая</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">Предыдущая</span>
+                                </li>
+                            {% endif %}
+
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
+                                    {% if page_obj.number == num %}
+                                        <li class="page-item active" aria-current="page">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Следующая</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">Следующая</span>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
             </main>
         </div> <!-- row end -->
     </div> <!-- container end -->

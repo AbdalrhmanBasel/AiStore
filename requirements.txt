@@ -9,6 +9,7 @@ django-cors-headers
 drf-spectacular
 django-redis
 gunicorn
+django-widget-tweaks
 
 # Core ML
 torch>=2.6.0,<3.0

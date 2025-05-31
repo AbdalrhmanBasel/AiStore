@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="section-content padding-y bg">
+  <div class="container">
+
+    <div class="row">
+      <aside class="col-lg-9">
+        <div class="card">
+          <table class="table table-borderless table-shopping-cart">
+            <thead class="text-muted">
+              <tr class="small text-uppercase">
+                <th scope="col">Товар</th>
+                <th scope="col" style="width:120px;">Количество</th>
+                <th scope="col" style="width:120px;">Цена</th>
+                <th scope="col" class="text-right" style="width:200px;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in cart_items %}
+              <tr>
+                <td>
+                  <figure class="itemside align-items-center">
+                    <div class="aside">
+                      <img src="{{ item.product.images.url }}" class="img-sm" alt="{{ item.product.product_name }}">
+                    </div>
+                    <figcaption class="info">
+                      <a href="{% url 'product_detail' item.product.slug %}" class="title text-dark">{{ item.product.product_name }}</a>
+                      <p class="text-muted small">{{ item.product.description|truncatewords:15 }}</p>
+                    </figcaption>
+                  </figure>
+                </td>
+                <td>
+                  <div class="col">
+                    <div class="input-group input-spinner">
+                      <a href="{% url 'update_quantity' item.id 'decrease' %}" class="btn btn-light" aria-label="Уменьшить количество">
+                        <i class="fa fa-minus"></i>
+                      </a>
+                      <input type="text" class="form-control" value="{{ item.quantity }}" readonly aria-label="Количество">
+                      <a href="{% url 'update_quantity' item.id 'increase' %}" class="btn btn-light" aria-label="Увеличить количество">
+                        <i class="fa fa-plus"></i>
+                      </a>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="price-wrap">
+                    <var class="price">${{ item.subtotal|floatformat:2 }}</var>
+                    <small class="text-muted">${{ item.product.price|floatformat:2 }} за единицу</small>
+                  </div>
+                </td>
+                <td class="text-right">
+                  <a href="{% url 'remove_from_cart' item.id %}" class="btn btn-danger" aria-label="Удалить {{ item.product.product_name }}">Удалить</a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="4" class="text-center text-muted">Ваша корзина пуста.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </aside>
+
+      <aside class="col-lg-3">
+        <div class="card">
+          <div class="card-body">
+            <dl class="dlist-align">
+              <dt>Общая сумма:</dt>
+              <dd class="text-right">${{ cart_total_price|floatformat:2 }}</dd>
+            </dl>
+            <dl class="dlist-align">
+              <dt>Налог:</dt>
+              <dd class="text-right">${{ cart_tax|floatformat:2 }}</dd>
+            </dl>
+            <dl class="dlist-align">
+              <dt>Итого:</dt>
+              <dd class="text-right text-dark b"><strong>${{ cart_final_total|floatformat:2 }}</strong></dd>
+            </dl>
+            <hr>
+            <p class="text-center mb-3">
+              <img src="{% static 'images/misc/payments.png' %}" alt="Способы оплаты" height="26">
+            </p>
+            {% if user.is_authenticated %}
+              <a href="{% url 'checkout' %}" class="btn btn-primary btn-block">Оформить заказ</a>
+            {% else %}
+              <a href="{% url 'login' %}?next={% url 'checkout' %}" class="btn btn-primary btn-block">Оформить заказ</a>
+            {% endif %}
+
+            <a href="{% url 'store' %}" class="btn btn-light btn-block">Продолжить покупки</a> 
+          </div>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+</section>
+{% endblock %}
