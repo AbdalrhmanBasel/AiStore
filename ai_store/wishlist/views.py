@@ -4,6 +4,7 @@ from django.contrib import messages
 from store.models import Product
 from .models import WishlistItem
 from cart.models import Cart, CartItem
+from tracking.hooks import log_interaction
 
 # ---------- Helper function ----------
 
@@ -21,6 +22,10 @@ def wishlist(request):
 @login_required
 def add_to_wishlist(request, product_id):
     product = get_object_or_404(Product, id=product_id)
+
+    # Log wishlist interaction
+    log_interaction(user_id=request.user.id, product_id=product.id, interaction_type='wishlist')
+
     WishlistItem.objects.get_or_create(user=request.user, product=product)
     messages.success(request, f"Товар «{product.product_name}» добавлен в список желаемого.")
     return redirect('wishlist')
@@ -51,6 +56,10 @@ def move_to_cart(request, item_id):
             cart_item.quantity += 1
 
         cart_item.save()
+
+        # Log cart interaction
+        log_interaction(user_id=request.user.id, product_id=product.id, interaction_type='cart')
+
         wishlist_item.delete()
 
         messages.success(request, f"Товар «{product.product_name}» перемещён в корзину.")
@@ -81,6 +90,10 @@ def move_all_to_cart(request):
                 cart_item.quantity += 1
 
             cart_item.save()
+
+            # Log cart interaction
+            log_interaction(user_id=request.user.id, product_id=product.id, interaction_type='cart')
+
             item.delete()
 
             moved_count += 1

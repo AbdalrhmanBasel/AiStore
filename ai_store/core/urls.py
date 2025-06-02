@@ -15,6 +15,8 @@ urlpatterns = [
     path('orders/', include('orders.urls')),  
     path('', include('dashboard.urls')),
     path('wishlist/', include('wishlist.urls')),
+    path('ratings/', include('ratings.urls')),
+
 ]
 
 # Serve media files in development (remove in production)

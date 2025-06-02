@@ -12,60 +12,6 @@
     </div>
 </section>
 
-<!-- 🎁 Recommended for You Section -->
-{% if recommended_products %}
-<section class="section-recommended-products py-5 bg-light">
-    <div class="container">
-        <header class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="section-title mb-0">🎁 Рекомендуем для вас</h3>
-            <a href="{% url 'store' %}" class="btn btn-outline-success">Посмотреть все</a>
-        </header>
-
-        <div class="row g-4">
-            {% for product in recommended_products %}
-                <div class="col-12 col-sm-6 col-md-3 d-flex align-items-stretch">
-                <article class="card card-product-grid shadow-sm border-0 rounded-3 product-card w-100 d-flex flex-column" role="group" aria-label="{{ product.product_name }}">
-                    <!-- Image Section -->
-                    <a href="{{ product.get_absolute_url }}" class="d-block position-relative overflow-hidden" style="height: 250px;" aria-label="Перейти к товару {{ product.product_name }}">
-                    {% if product.images %}
-                        <img src="{{ product.images.url }}" alt="{{ product.product_name }}" class="img-fluid w-100 h-100" style="object-fit: cover; transition: transform 0.3s ease;">
-                    {% else %}
-                        <img src="{% static 'images/items/default.jpg' %}" alt="Нет изображения" class="img-fluid w-100 h-100" style="object-fit: cover;">
-                    {% endif %}
-                    </a>
-
-                    <!-- Product Info -->
-                    <div class="card-body d-flex flex-column">
-                    <h5 class="card-title text-truncate mb-2" title="{{ product.product_name }}">
-                        <a href="{{ product.get_absolute_url }}" class="stretched-link text-decoration-none text-dark">
-                        {{ product.product_name }}
-                        </a>
-                    </h5>
-
-                    <p class="card-text text-muted small mb-3">{{ product.category }}</p>
-
-                    <div class="mt-auto">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <span class="price text-primary fs-5 fw-bold">${{ product.price }}</span>
-                        </div>
-                        <a href="{% url 'add_to_wishlist' product.id %}" class="btn btn-sm btn-outline-danger rounded-circle" aria-label="Добавить {{ product.product_name }} в список желаемого" title="Добавить в список желаемого">
-                            <i class="fa fa-heart"></i>
-                        </a>
-                        </div>
-                        <a href="{% url 'add_cart' product.id %}" class="btn btn-success w-100" aria-label="Добавить {{ product.product_name }} в корзину">
-                        <i class="fa fa-shopping-cart me-2"></i> В корзину
-                        </a>
-                    </div>
-                    </div>
-                </article>
-                </div>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-{% endif %}
-
 <!-- Popular Products Section -->
 <section class="section-popular-products py-5">
     <div class="container">
@@ -103,10 +49,13 @@
                             <div class="d-flex justify-content-between align-items-center mb-3">
                             <div>
                                 <span class="price text-primary fs-5 fw-bold">${{ product.price }}</span>
+                                {% if product.discount %}
+                                <del class="price-old ms-2 text-muted">${{ product.original_price }}</del>
+                                {% endif %}
                             </div>
                             <a href="{% url 'add_to_wishlist' product.id %}" class="btn btn-sm btn-outline-danger rounded-circle" aria-label="Добавить {{ product.product_name }} в список желаемого" title="Добавить в список желаемого">
                                 <i class="fa fa-heart"></i>
-                            </a>
+                            </a>                            
                             </div>
                             <a href="{% url 'add_cart' product.id %}" class="btn btn-primary w-100" aria-label="Добавить {{ product.product_name }} в корзину">
                             <i class="fa fa-shopping-cart me-2"></i> В корзину
@@ -117,11 +66,137 @@
                     </div>
                 {% endif %}
                 {% endfor %}
+
             {% else %}
                 <p class="text-center">Товары не найдены.</p>
             {% endif %}
         </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <nav class="mt-4" aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}" tabindex="-1">Предыдущая</a>
+                </li>
+                {% for num in page_obj.paginator.page_range %}
+                    {% if num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
+                        <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Следующая</a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
     </div>
 </section>
+
+<style>
+    /* Product Card Hover Effect */
+    .product-card {
+        transition: box-shadow 0.3s ease, transform 0.3s ease;
+        cursor: pointer;
+        border-radius: 12px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Hover effect for product cards (slight lift) */
+    .product-card:hover {
+        box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+        transform: translateY(-5px);
+    }
+
+    /* Smooth scaling effect on product images */
+    .product-card:hover img {
+        transform: scale(1.05);
+    }
+
+    /* Price styling */
+    .price {
+        font-weight: 600;
+        font-size: 1.3rem;
+        color: #333;
+    }
+
+    /* Old price styling */
+    .price-old {
+        font-size: 1rem;
+        text-decoration: line-through;
+        color: #999;
+    }
+
+    /* Wishlist button style */
+    .btn-outline-danger {
+        border-radius: 50%;
+        border-width: 1px;
+        transition: transform 0.3s ease;
+        padding: 0.25rem 0.4rem;
+        width: 2rem;
+        height: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-outline-danger:hover {
+        transform: translateY(-3px);
+        color: #fff;
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+
+    /* Add to Cart Button */
+    .btn-primary {
+        border-radius: 5px;
+        font-weight: 600;
+        padding: 12px;
+        transition: background-color 0.3s ease;
+        text-align: center;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+
+    /* Badge style for availability */
+    .badge {
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+    }
+
+    /* Styling for the card body */
+    .card-body {
+        padding: 1.2rem;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+    }
+
+    /* Styling for the title, category, and price */
+    .card-title {
+        font-size: 1.1rem;
+        font-weight: 500;
+        position: relative; /* for stretched link */
+    }
+    .card-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+    /* Proper spacing between elements */
+    .product-card .btn {
+        margin-top: 1rem;
+    }
+</style>
+
 
 {% endblock %}

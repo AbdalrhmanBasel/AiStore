@@ -1,13 +1,16 @@
+# orders/views.py
+
 from django.shortcuts import render, redirect, get_object_or_404
 from cart.models import Cart, CartItem
 from store.models import Product
-from orders.models import Order, OrderItem, Payment  # Add Payment model
+from orders.models import Order, OrderItem, Payment
 from .forms import BillingForm
 from django.contrib import messages
 from django.db import transaction
 from decimal import Decimal, ROUND_HALF_UP
 from django.contrib.auth.decorators import login_required
-from cart.views import get_cart 
+from cart.views import get_cart
+from tracking.hooks import log_interaction  # ⭐ Add this
 
 @login_required(login_url='login')
 def checkout(request):
@@ -22,7 +25,7 @@ def checkout(request):
 
     if request.method == "POST":
         form = BillingForm(request.POST)
-        payment_method = request.POST.get('payment_method')  # Now user can choose
+        payment_method = request.POST.get('payment_method')
 
         if form.is_valid():
             if not cart_items.exists():
@@ -37,7 +40,7 @@ def checkout(request):
                     order.total_price = final_total
                     order.save()
 
-                    # Create OrderItems
+                    # Create OrderItems + ⭐ Track purchase
                     for item in cart_items:
                         OrderItem.objects.create(
                             order=order,
@@ -45,6 +48,9 @@ def checkout(request):
                             quantity=item.quantity,
                             price=item.product.price
                         )
+
+                        # ⭐ Track purchase interaction
+                        log_interaction(user_id=request.user.id, product_id=item.product.id, interaction_type='purchase')
 
                     # Create Payment
                     Payment.objects.create(
@@ -83,8 +89,6 @@ def checkout(request):
         'cart_final_total': final_total,
     }
     return render(request, 'orders/checkout.html', context)
-
-
 
 # Order success page
 def order_success(request):

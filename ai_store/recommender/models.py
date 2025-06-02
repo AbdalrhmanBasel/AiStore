@@ -15,4 +15,4 @@ class Recommendation(models.Model):
         ordering = ['-score', '-created_at']
 
     def __str__(self):
-        return f"Recommendation: {self.user.email} -> {self.product.product_name} (score: {self.score:.2f})"
+        return f"Recommendation: {self.user.email} → {self.product.product_name} (score: {self.score:.2f})"

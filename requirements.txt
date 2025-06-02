@@ -10,6 +10,7 @@ drf-spectacular
 django-redis
 gunicorn
 django-widget-tweaks
+uvicorn
 
 # Core ML
 torch>=2.6.0,<3.0
@@ -24,6 +25,8 @@ tensorboard
 torchmetrics
 xgboost
 lightgbm
+fastapi
+
 
 # Utils
 matplotlib>=3.10.1,<4.0
