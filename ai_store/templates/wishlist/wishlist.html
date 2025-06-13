@@ -22,7 +22,11 @@
 
           <!-- Product Image -->
           <a href="{{ item.product.get_absolute_url }}" class="d-block position-relative" style="height: 220px;">
-            <img src="{{ item.product.images.url }}" alt="{{ item.product.product_name }}" class="card-img-top rounded-top" style="height: 100%; object-fit: cover;">
+            <img src="{% if item.product.images %}{{ item.product.images.url }}{% else %}/static/images/placeholders/no-image.png{% endif %}" 
+              alt="{{ item.product.product_name }}" 
+              class="card-img-top rounded-top" 
+              style="height: 100%; object-fit: cover;">
+
           </a>
 
           <div class="card-body d-flex flex-column p-3">

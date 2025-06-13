@@ -4,7 +4,7 @@ from recommender.graph.graph_export import export_interaction_graph
 from recommender.graph.loader import build_graph_data
 from recommender.gnn.train import train_gnn
 from recommender.models import Recommendation
-from recommender.utils import get_products_from_encoded, user_encoder
+from recommender.utils import get_products_from_encoded, load_encoder
 import torch
 
 EMBEDDINGS_PATH = 'recommender/embeddings/gnn_embeddings.pt'
@@ -25,6 +25,9 @@ def run_full_pipeline():
     print("🎉 Full pipeline completed!")
 
 def update_recommendations(top_n=10):
+    # Load encoders
+    user_encoder, product_encoder = load_encoder()
+
     # Load embeddings
     emb = torch.load(EMBEDDINGS_PATH)
     user_emb = emb['user_emb']
@@ -42,9 +45,9 @@ def update_recommendations(top_n=10):
         top_scores = scores[top_indices]
 
         product_ids_enc = top_indices.tolist()
-        products = get_products_from_encoded(product_ids_enc)
+        products = get_products_from_encoded(product_ids_enc, product_encoder)
 
-        user_id = reverse_user_encoder(user_enc)
+        user_id = reverse_user_encoder(user_enc, user_encoder)
 
         for i, product in enumerate(products):
             if product:
@@ -56,5 +59,5 @@ def update_recommendations(top_n=10):
 
     print("✅ Recommendations updated")
 
-def reverse_user_encoder(user_enc_id):
+def reverse_user_encoder(user_enc_id, user_encoder):
     return int(user_encoder.inverse_transform([user_enc_id])[0])
